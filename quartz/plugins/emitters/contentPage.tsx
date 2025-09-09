@@ -28,25 +28,17 @@ async function processContent(
 ) {
   const slug = fileData.slug!
   const cfg = ctx.cfg.configuration
-  
-  /** Until the end of visit(), this code snippet is from
-   * https://github.com/jackyzha0/quartz/issues/454#issuecomment-2408792538
-   * by auctumnus
-   * 
-   * It removes all the links that would lead to missing pages, ie.
-   * 
-   * [[Missing link]] when Missing link.md does not exist.
-   */
+
   const allSlugs = allFiles.map((f) => (f.slug ? resolveRelative(slug, f.slug) : ""))
- 
+
   visit(tree as Root, "element", (elem) => {
     if (elem.tagName === "a" && elem.properties.href) {
       const href = elem.properties.href.toString()
- 
+
       if (href.startsWith("#")) {
         return
       }
- 
+
       if (!allSlugs.includes(href as RelativeURL)) {
         if (elem.properties.className === undefined) {
           elem.properties.className = "dead-link"
