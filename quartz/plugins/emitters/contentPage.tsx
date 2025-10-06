@@ -37,16 +37,21 @@ async function processContent(
 
       const isAnchor = href.startsWith("#")
       const isExternalByClass =
-        (Array.isArray(elem.properties.className) && elem.properties.className.includes("external")) ||
-        (typeof elem.properties.className === "string" && elem.properties.className.includes("external"))
+        (Array.isArray(elem.properties.className) &&
+          elem.properties.className.includes("external")) ||
+        (typeof elem.properties.className === "string" &&
+          elem.properties.className.includes("external"))
       const isHttpExternal = /^https?:\/\//i.test(href)
       // treat common asset/file extensions as valid (pdf, images, media, docs, data)
-      const isAsset = /\.(pdf|png|jpe?g|gif|webp|svg|heic|mp3|mp4|mov|wav|ogg|webm|zip|tar|gz|csv|tsv|json|txt|mdx?)$/i.test(href)
+      const isAsset =
+        /\.(pdf|png|jpe?g|gif|webp|svg|heic|mp3|mp4|mov|wav|ogg|webm|zip|tar|gz|csv|tsv|json|txt|mdx?)$/i.test(
+          href,
+        )
 
       if (isAnchor || isHttpExternal || isExternalByClass || isAsset) {
         return
       }
-      
+
       if (!allSlugs.includes(href as RelativeURL)) {
         if (elem.properties.className === undefined) {
           elem.properties.className = "dead-link"

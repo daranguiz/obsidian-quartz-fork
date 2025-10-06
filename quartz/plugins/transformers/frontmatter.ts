@@ -71,6 +71,12 @@ export const FrontMatter: QuartzTransformerPlugin<Partial<Options>> = (userOpts)
               },
             })
 
+            const rawData = (
+              typeof structuredClone === "function"
+                ? structuredClone(data)
+                : JSON.parse(JSON.stringify(data))
+            ) as QuartzPluginData["frontmatterRaw"]
+
             if (data.title != null && data.title.toString() !== "") {
               data.title = data.title.toString()
             } else {
@@ -124,6 +130,7 @@ export const FrontMatter: QuartzTransformerPlugin<Partial<Options>> = (userOpts)
 
             // fill in frontmatter
             file.data.frontmatter = data as QuartzPluginData["frontmatter"]
+            file.data.frontmatterRaw = rawData
           }
         },
       ]
@@ -152,5 +159,6 @@ declare module "vfile" {
         socialImage: string
         comments: boolean | string
       }>
+    frontmatterRaw: { [key: string]: unknown }
   }
 }
