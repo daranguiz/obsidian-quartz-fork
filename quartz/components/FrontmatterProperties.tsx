@@ -1,10 +1,18 @@
 import { Fragment, JSX } from "preact"
 import { classNames } from "../util/lang"
-import { FilePath, FullSlug, resolveRelative, slugifyFilePath, splitAnchor } from "../util/path"
+import { FullSlug, splitAnchor, TransformOptions, transformLink } from "../util/path"
 import { QuartzComponent, QuartzComponentConstructor, QuartzComponentProps } from "./types"
 import { wikilinkRegex } from "../plugins/transformers/ofm"
 
 type FrontmatterValue = unknown
+
+type RenderContext = {
+  fileData: QuartzComponentProps["fileData"]
+  ctx: QuartzComponentProps["ctx"]
+  baseSlug?: FullSlug
+  validLinks: Set<string>
+  transformOptions: TransformOptions
+}
 
 const isPlainObject = (value: FrontmatterValue): value is Record<string, unknown> => {
   return (
@@ -18,6 +26,31 @@ const shouldSkipEntry = (value: FrontmatterValue) => {
   if (typeof value === "string") return value.trim() === ""
   if (isPlainObject(value)) return Object.keys(value).length === 0
   return false
+}
+
+const normalizeHref = (href: string): string => {
+  const [path] = href.split("#")
+  if (path === "") return "."
+
+  let normalized = path
+
+  while (normalized.startsWith("./")) {
+    normalized = normalized.slice(2)
+  }
+
+  if (normalized.endsWith("/index")) {
+    normalized = normalized.slice(0, -"/index".length)
+  }
+
+  if (normalized !== "." && normalized.endsWith("/")) {
+    normalized = normalized.slice(0, -1)
+  }
+
+  if (normalized === "") {
+    normalized = "."
+  }
+
+  return normalized
 }
 
 const renderBoolean = (value: boolean) => {
@@ -45,11 +78,7 @@ const renderPlainText = (text: string) => {
   return <span class="frontmatter-text">{text}</span>
 }
 
-const renderWikiLinks = (
-  text: string,
-  fileData: QuartzComponentProps["fileData"],
-  linkClass = "internal",
-) => {
+const renderWikiLinks = (text: string, context: RenderContext, linkClass = "internal") => {
   const regex = new RegExp(wikilinkRegex)
   const externalLinkPattern = /^[a-z][a-z0-9+.-]*:/i
   const nodes: (string | JSX.Element)[] = []
@@ -86,30 +115,44 @@ const renderWikiLinks = (
       continue
     }
 
-    const [target, anchor] = splitAnchor(`${filePath}${header}`)
+    const combinedTarget = `${filePath}${header ?? ""}`
+    const [target, anchor] = splitAnchor(combinedTarget)
 
-    let href = ""
+    let href = combinedTarget
+    let isValid = true
+
     if (target === "") {
       href = anchor || "#"
     } else {
-      const slug = slugifyFilePath(target as FilePath)
-      const relative = fileData.slug
-        ? resolveRelative(fileData.slug as FullSlug, slug)
-        : (slug as unknown as string)
-      href = `${relative}${anchor}`
+      const baseSlug = context.baseSlug
+      if (baseSlug) {
+        href = transformLink(baseSlug, combinedTarget, context.transformOptions)
+        const normalizedHref = normalizeHref(href)
+        if (normalizedHref !== ".") {
+          isValid = context.validLinks.has(normalizedHref)
+        }
+      }
     }
 
     const display = alias || (target !== "" ? target : anchor.replace(/^#/, "")) || filePath
 
-    nodes.push(
-      <a
-        key={`frontmatter-link-${linkIndex++}`}
-        class={`${linkClass}${isEmbed ? " embed" : ""}`}
-        href={href}
-      >
-        {display}
-      </a>,
-    )
+    if (!isValid) {
+      nodes.push(
+        <span key={`frontmatter-link-${linkIndex++}`} class="dead-link">
+          {display}
+        </span>,
+      )
+    } else {
+      nodes.push(
+        <a
+          key={`frontmatter-link-${linkIndex++}`}
+          class={`${linkClass}${isEmbed ? " embed" : ""}`}
+          href={href}
+        >
+          {display}
+        </a>,
+      )
+    }
 
     lastIndex = startIndex + raw.length
   }
@@ -121,10 +164,7 @@ const renderWikiLinks = (
   return <span class="frontmatter-text">{nodes}</span>
 }
 
-const renderValue = (
-  value: FrontmatterValue,
-  fileData: QuartzComponentProps["fileData"],
-): JSX.Element => {
+const renderValue = (value: FrontmatterValue, context: RenderContext): JSX.Element => {
   if (typeof value === "boolean") {
     return renderBoolean(value)
   }
@@ -142,7 +182,7 @@ const renderValue = (
       <span class="frontmatter-array">
         {value.map((item, idx) => (
           <Fragment key={`frontmatter-array-${idx}`}>
-            {renderValue(item, fileData)}
+            {renderValue(item, context)}
             {idx < value.length - 1 ? <span class="frontmatter-separator">, </span> : null}
           </Fragment>
         ))}
@@ -156,7 +196,7 @@ const renderValue = (
 
   if (typeof value === "string") {
     if (value.includes("[[")) {
-      return renderWikiLinks(value, fileData)
+      return renderWikiLinks(value, context)
     }
     return renderPlainText(value)
   }
@@ -274,6 +314,8 @@ const getIcon = (key: string) => {
 const FrontmatterProperties: QuartzComponent = ({
   fileData,
   displayClass,
+  allFiles,
+  ctx,
 }: QuartzComponentProps) => {
   const raw = fileData.frontmatterRaw
   if (!raw) {
@@ -285,6 +327,43 @@ const FrontmatterProperties: QuartzComponent = ({
     return null
   }
 
+  const baseSlug = fileData.slug as FullSlug | undefined
+
+  const transformOptions: TransformOptions = {
+    strategy: "shortest",
+    allSlugs: ctx.allSlugs,
+  }
+
+  const renderContext: RenderContext = {
+    fileData,
+    ctx,
+    baseSlug,
+    validLinks: new Set<string>(),
+    transformOptions,
+  }
+
+  if (baseSlug) {
+    const addCandidate = (target: FullSlug) => {
+      const href = transformLink(baseSlug, target, transformOptions)
+      renderContext.validLinks.add(normalizeHref(href))
+    }
+
+    for (const data of allFiles) {
+      const slug = data.slug as FullSlug | undefined
+      const aliases = data.aliases as FullSlug[] | undefined
+
+      if (slug) {
+        addCandidate(slug)
+      }
+
+      if (aliases) {
+        for (const aliasSlug of aliases) {
+          addCandidate(aliasSlug)
+        }
+      }
+    }
+  }
+
   return (
     <section class={classNames(displayClass, "frontmatter-properties")}>
       <dl>
@@ -294,7 +373,7 @@ const FrontmatterProperties: QuartzComponent = ({
               <span class="frontmatter-icon">{getIcon(key)}</span>
               <span class="frontmatter-label">{key.replace(/_/g, " ")}</span>
             </dt>
-            <dd>{renderValue(value, fileData)}</dd>
+            <dd>{renderValue(value, renderContext)}</dd>
           </Fragment>
         ))}
       </dl>
