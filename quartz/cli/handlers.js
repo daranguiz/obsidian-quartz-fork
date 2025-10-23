@@ -237,7 +237,25 @@ export async function handleBuild(argv) {
     argv.watch = true
   }
 
-  console.log(`\n${styleText(["bgGreen", "black"], ` Quartz v${version} `)} \n`)
+  // Set publish mode environment variable if provided
+  if (argv.publishMode) {
+    process.env.QUARTZ_PUBLISH_MODE = argv.publishMode
+  }
+
+  // Set base URL environment variable if provided
+  if (argv.baseUrl) {
+    process.env.QUARTZ_BASE_URL = argv.baseUrl
+  }
+
+  // Display build info
+  console.log(`\n${styleText(["bgGreen", "black"], ` Quartz v${version} `)} `)
+  if (argv.publishMode) {
+    console.log(styleText(["bgBlue", "white"], ` Publish Mode: ${argv.publishMode} `))
+  }
+  if (argv.baseUrl) {
+    console.log(styleText(["bgCyan", "black"], ` Base URL: ${argv.baseUrl} `))
+  }
+  console.log()
   const ctx = await esbuild.context({
     entryPoints: [fp],
     outfile: cacheFile,

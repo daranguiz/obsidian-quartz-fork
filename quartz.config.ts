@@ -16,7 +16,7 @@ const config: QuartzConfig = {
       provider: "plausible",
     },
     locale: "en-US",
-    baseUrl: "notes.dario.ca",
+    baseUrl: process.env.QUARTZ_BASE_URL || "notes.dario.ca",
     ignorePatterns: ["private", "templates", ".obsidian"],
     defaultDateType: "modified",
     theme: {
@@ -73,7 +73,12 @@ const config: QuartzConfig = {
       Plugin.Description(),
       Plugin.Latex({ renderEngine: "katex" }),
     ],
-    filters: [Plugin.RemoveDrafts()],
+    filters: [
+      Plugin.RemoveDrafts(),
+      Plugin.PublishMode({
+        mode: process.env.QUARTZ_PUBLISH_MODE as "trusted" | "public" | undefined,
+      }),
+    ],
     emitters: [
       Plugin.AliasRedirects(),
       Plugin.ComponentResources(),

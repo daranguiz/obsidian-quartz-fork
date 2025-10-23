@@ -105,4 +105,15 @@ export const BuildArgv = {
     number: true,
     describe: "how many threads to use to parse notes",
   },
+  publishMode: {
+    string: true,
+    alias: ["pm"],
+    choices: ["full", "trusted", "public"],
+    describe: "filter content by publish mode (full, publish-trusted, or publish-public frontmatter)",
+  },
+  baseUrl: {
+    string: true,
+    alias: ["u"],
+    describe: "base URL for the site (e.g., vault.dario.ca, notes-private.dario.ca, notes.dario.ca)",
+  },
 }
