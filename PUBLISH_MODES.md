@@ -2,7 +2,7 @@
 
 This Quartz fork supports selective publishing based on frontmatter fields. This allows you to maintain one content repository but build different versions of your site with different subsets of content.
 
-## Three-Tier Publishing System
+## Four-Tier Publishing System
 
 ### Tier 1: Full (vault.dario.ca)
 - **Audience:** Highly restricted, private access
@@ -16,7 +16,13 @@ This Quartz fork supports selective publishing based on frontmatter fields. This
 - **Frontmatter:** Requires `publish-trusted: true`
 - **Build command:** `npx quartz build --publish-mode trusted --baseUrl notes-private.dario.ca`
 
-### Tier 3: Public (notes.dario.ca)
+### Tier 3: Shachu (shachu.dario.ca)
+- **Audience:** Shachu members
+- **Content:** ONLY notes with `publish-shachu: true`
+- **Frontmatter:** Requires `publish-shachu: true`
+- **Build command:** `npx quartz build --publish-mode shachu --baseUrl shachu.dario.ca`
+
+### Tier 4: Public (notes.dario.ca)
 - **Audience:** Public, unrestricted access
 - **Content:** ONLY notes with `publish-public: true`
 - **Frontmatter:** Requires `publish-public: true`
@@ -43,7 +49,15 @@ publish-trusted: true
 ---
 ```
 
-**Public note (full + trusted + public):**
+**Shachu note (full + trusted + shachu):**
+```markdown
+---
+title: My Shachu Note
+publish-shachu: true
+---
+```
+
+**Public note (full + trusted + shachu + public):**
 ```markdown
 ---
 title: My Public Note
@@ -51,7 +65,7 @@ publish-public: true
 ---
 ```
 
-**Note:** The publish flags are hierarchical. Setting `publish-public: true` automatically includes the note in the trusted tier as well, since public is more permissive than trusted. You don't need to set both flags.
+**Note:** The publish flags are hierarchical. Setting `publish-public: true` automatically includes the note in shachu and trusted tiers. Setting `publish-shachu: true` includes it in the trusted tier. You don't need to set multiple flags.
 
 ### 2. Draft Notes
 
@@ -69,7 +83,7 @@ This note will not appear in ANY tier until you remove `draft: true`.
 
 ## Cloudflare Pages Setup
 
-Configure three separate Cloudflare Pages projects, all pulling from the same repositories:
+Configure four separate Cloudflare Pages projects, all pulling from the same repositories:
 
 ### Full Site (vault.dario.ca)
 - **Build command:** `npx quartz build --publish-mode full --baseUrl vault.dario.ca`
@@ -83,20 +97,27 @@ Configure three separate Cloudflare Pages projects, all pulling from the same re
 - **Access:** Restricted to trusted users via Cloudflare Zero Trust
 - **Content:** Only notes with `publish-trusted: true`
 
+### Shachu Site (shachu.dario.ca)
+- **Build command:** `npx quartz build --publish-mode shachu --baseUrl shachu.dario.ca`
+- **Output directory:** `public`
+- **Access:** Restricted to shachu members via Cloudflare Zero Trust
+- **Content:** Only notes with `publish-shachu: true`
+
 ### Public Site (notes.dario.ca)
 - **Build command:** `npx quartz build --publish-mode public --baseUrl notes.dario.ca`
 - **Output directory:** `public`
 - **Access:** Fully public, no restrictions
 - **Content:** Only notes with `publish-public: true`
 
-All three projects pull from the same repositories (obsidian-vault and this Quartz repo).
+All four projects pull from the same repositories (obsidian-vault and this Quartz repo).
 
 ## How It Works
 
 1. The `PublishMode` filter plugin checks frontmatter for the appropriate publish flag
 2. Depending on the mode:
    - **full**: All files are published (no filtering by publish flags)
-   - **trusted**: Only files with `publish-trusted: true` are published
+   - **trusted**: Only files with `publish-trusted: true`, `publish-shachu: true`, or `publish-public: true` are published
+   - **shachu**: Only files with `publish-shachu: true` or `publish-public: true` are published
    - **public**: Only files with `publish-public: true` are published
 3. The `RemoveDrafts` filter always applies first (files with `draft: true` are never published in any mode)
 
@@ -105,8 +126,9 @@ All three projects pull from the same repositories (obsidian-vault and this Quar
 1. Write a note in Obsidian
 2. Initially, don't add any publish flags → note only appears on vault.dario.ca (full tier)
 3. When ready to share with trusted users, add `publish-trusted: true` → note now appears on vault.dario.ca and notes-private.dario.ca
-4. When ready to share publicly, add `publish-public: true` → note now appears on all three sites
-5. All three Cloudflare Pages projects will rebuild automatically when you push to git
+4. When ready to share with shachu, add `publish-shachu: true` → note now appears on vault.dario.ca, notes-private.dario.ca, and shachu.dario.ca
+5. When ready to share publicly, add `publish-public: true` → note now appears on all four sites
+6. All four Cloudflare Pages projects will rebuild automatically when you push to git
 
 ## Adding More Modes
 
@@ -126,11 +148,12 @@ To add additional publish modes (e.g., `internal-publish`):
 
 ## Content Visibility Matrix
 
-| Note Type | vault.dario.ca (full) | notes-private.dario.ca (trusted) | notes.dario.ca (public) |
-|-----------|----------------------|----------------------------------|-------------------------|
-| No frontmatter | ✅ | ❌ | ❌ |
-| `publish-trusted: true` | ✅ | ✅ | ❌ |
-| `publish-public: true` | ✅ | ✅ (hierarchical) | ✅ |
-| `draft: true` | ❌ | ❌ | ❌ |
+| Note Type | vault.dario.ca (full) | notes-private.dario.ca (trusted) | shachu.dario.ca (shachu) | notes.dario.ca (public) |
+|-----------|----------------------|----------------------------------|--------------------------|-------------------------|
+| No frontmatter | ✅ | ❌ | ❌ | ❌ |
+| `publish-trusted: true` | ✅ | ✅ | ❌ | ❌ |
+| `publish-shachu: true` | ✅ | ✅ (hierarchical) | ✅ | ❌ |
+| `publish-public: true` | ✅ | ✅ (hierarchical) | ✅ (hierarchical) | ✅ |
+| `draft: true` | ❌ | ❌ | ❌ | ❌ |
 
-**Note:** The flags are hierarchical - `publish-public: true` automatically includes the note in trusted tier.
+**Note:** The flags are hierarchical - `publish-public: true` automatically includes the note in shachu and trusted tiers. `publish-shachu: true` includes it in the trusted tier.

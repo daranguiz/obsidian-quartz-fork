@@ -108,12 +108,12 @@ export const BuildArgv = {
   publishMode: {
     string: true,
     alias: ["pm"],
-    choices: ["full", "trusted", "public"],
-    describe: "filter content by publish mode (full, publish-trusted, or publish-public frontmatter)",
+    choices: ["full", "trusted", "shachu", "public"],
+    describe: "filter content by publish mode (full, publish-trusted, publish-shachu, or publish-public frontmatter)",
   },
   baseUrl: {
     string: true,
     alias: ["u"],
-    describe: "base URL for the site (e.g., vault.dario.ca, notes-private.dario.ca, notes.dario.ca)",
+    describe: "base URL for the site (e.g., vault.dario.ca, notes-private.dario.ca, shachu.dario.ca, notes.dario.ca)",
   },
 }

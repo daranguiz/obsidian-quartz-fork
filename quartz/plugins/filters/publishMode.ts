@@ -5,9 +5,10 @@ export interface Options {
    * The publish mode to filter by. If not set, all non-draft content will be published.
    * - "full": Publish all content (backward compatible with no mode set)
    * - "trusted": Only publish content with `publish-trusted: true` in frontmatter
+   * - "shachu": Only publish content with `publish-shachu: true` in frontmatter
    * - "public": Only publish content with `publish-public: true` in frontmatter
    */
-  mode?: "full" | "trusted" | "public"
+  mode?: "full" | "trusted" | "shachu" | "public"
 }
 
 /**
@@ -28,11 +29,19 @@ export const PublishMode: QuartzFilterPlugin<Options> = (userOpts) => {
       const frontmatter = vfile.data?.frontmatter
 
       // Check for the appropriate publish flag based on mode
-      // Hierarchical: publish-public implies publish-trusted
+      // Hierarchical: publish-public implies publish-shachu implies publish-trusted
       if (opts.mode === "trusted") {
-        // Trusted tier includes both publish-trusted and publish-public content
+        // Trusted tier includes publish-trusted, publish-shachu, and publish-public content
         return (frontmatter?.["publish-trusted"] === true ||
                 frontmatter?.["publish-trusted"] === "true" ||
+                frontmatter?.["publish-shachu"] === true ||
+                frontmatter?.["publish-shachu"] === "true" ||
+                frontmatter?.["publish-public"] === true ||
+                frontmatter?.["publish-public"] === "true")
+      } else if (opts.mode === "shachu") {
+        // Shachu tier includes publish-shachu and publish-public content
+        return (frontmatter?.["publish-shachu"] === true ||
+                frontmatter?.["publish-shachu"] === "true" ||
                 frontmatter?.["publish-public"] === true ||
                 frontmatter?.["publish-public"] === "true")
       } else if (opts.mode === "public") {
