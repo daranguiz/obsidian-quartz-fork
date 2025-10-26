@@ -322,7 +322,11 @@ const FrontmatterProperties: QuartzComponent = ({
     return null
   }
 
-  const entries = Object.entries(raw).filter(([, value]) => !shouldSkipEntry(value))
+  // Filter out publish flags and empty values
+  const publishFlags = ["publish-trusted", "publish-shachu", "publish-public"]
+  const entries = Object.entries(raw).filter(
+    ([key, value]) => !shouldSkipEntry(value) && !publishFlags.includes(key)
+  )
   if (entries.length === 0) {
     return null
   }
