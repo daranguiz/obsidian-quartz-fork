@@ -1,3 +1,4 @@
 export { RemoveDrafts } from "./draft"
 export { ExplicitPublish } from "./explicit"
 export { PublishMode } from "./publishMode"
+export { IndexSwapper } from "./indexSwapper"

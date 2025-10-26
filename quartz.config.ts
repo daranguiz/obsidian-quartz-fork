@@ -75,12 +75,12 @@ const config: QuartzConfig = {
     ],
     filters: [
       Plugin.RemoveDrafts(),
+      Plugin.IndexSwapper(), // Must run BEFORE PublishMode to modify index frontmatter
       Plugin.PublishMode({
         mode: process.env.QUARTZ_PUBLISH_MODE as "trusted" | "public" | undefined,
       }),
     ],
     emitters: [
-      Plugin.IndexSwapper(), // Must run BEFORE ContentPage to swap index files
       Plugin.AliasRedirects(),
       Plugin.ComponentResources(),
       Plugin.ContentPage(),

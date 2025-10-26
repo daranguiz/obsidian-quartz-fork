@@ -39,7 +39,16 @@ export const defaultContentPageLayout: PageLayout = {
         { Component: Component.ReaderMode() },
       ],
     }),
-    Component.Explorer(),
+    Component.Explorer({
+      filterFn: (node) => {
+        // Exclude tags folder and unused index files
+        if (node.slugSegment === "tags") return false
+        // Exclude index-trusted, index-shachu, index-public files
+        // The main index.md is kept
+        if (node.slug?.match(/^index-(trusted|shachu|public)$/)) return false
+        return true
+      },
+    }),
   ],
   right: [
     Component.Graph(),
@@ -63,7 +72,16 @@ export const defaultListPageLayout: PageLayout = {
         { Component: Component.Darkmode() },
       ],
     }),
-    Component.Explorer(),
+    Component.Explorer({
+      filterFn: (node) => {
+        // Exclude tags folder and unused index files
+        if (node.slugSegment === "tags") return false
+        // Exclude index-trusted, index-shachu, index-public files
+        // The main index.md is kept
+        if (node.slug?.match(/^index-(trusted|shachu|public)$/)) return false
+        return true
+      },
+    }),
   ],
   right: [],
 }
