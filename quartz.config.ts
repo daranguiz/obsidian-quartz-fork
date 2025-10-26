@@ -80,6 +80,7 @@ const config: QuartzConfig = {
       }),
     ],
     emitters: [
+      Plugin.IndexSwapper(), // Must run BEFORE ContentPage to swap index files
       Plugin.AliasRedirects(),
       Plugin.ComponentResources(),
       Plugin.ContentPage(),

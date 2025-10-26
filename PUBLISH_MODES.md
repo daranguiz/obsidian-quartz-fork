@@ -12,60 +12,67 @@ This Quartz fork supports selective publishing based on frontmatter fields. This
 
 ### Tier 2: Trusted (notes-private.dario.ca)
 - **Audience:** Trusted users with broader access
-- **Content:** ONLY notes with `publish-trusted: true`
-- **Frontmatter:** Requires `publish-trusted: true`
+- **Content:** ONLY notes with `publish: "[[Trusted]]"`
+- **Frontmatter:** Requires `publish: "[[Trusted]]"` (or higher)
 - **Build command:** `npx quartz build --publish-mode trusted --baseUrl notes-private.dario.ca`
 
 ### Tier 3: Shachu (shachu.dario.ca)
 - **Audience:** Shachu members
-- **Content:** ONLY notes with `publish-shachu: true`
-- **Frontmatter:** Requires `publish-shachu: true`
+- **Content:** ONLY notes with `publish: "[[Shachu]]"`
+- **Frontmatter:** Requires `publish: "[[Shachu]]"` (or higher)
 - **Build command:** `npx quartz build --publish-mode shachu --baseUrl shachu.dario.ca`
 
 ### Tier 4: Public (notes.dario.ca)
 - **Audience:** Public, unrestricted access
-- **Content:** ONLY notes with `publish-public: true`
-- **Frontmatter:** Requires `publish-public: true`
+- **Content:** ONLY notes with `publish: "[[Public]]"`
+- **Frontmatter:** Requires `publish: "[[Public]]"`
 - **Build command:** `npx quartz build --publish-mode public --baseUrl notes.dario.ca`
 
 ## Usage
 
 ### 1. Add Frontmatter to Your Markdown Files
 
-In your Obsidian notes, add frontmatter flags to control which tiers can see each note:
+In your Obsidian notes, add a `publish` field to control which tiers can see each note. Obsidian will render this as a dropdown for easy selection:
 
-**Private note (full only):**
+**Private note (vault only):**
 ```markdown
 ---
 title: My Private Note
+# No publish field, or publish: "" (empty)
 ---
 ```
 
-**Trusted note (full + trusted):**
+**Trusted note (vault + trusted):**
 ```markdown
 ---
 title: My Trusted Note
-publish-trusted: true
+publish: "[[Trusted]]"
 ---
 ```
 
-**Shachu note (full + trusted + shachu):**
+**Shachu note (vault + trusted + shachu):**
 ```markdown
 ---
 title: My Shachu Note
-publish-shachu: true
+publish: "[[Shachu]]"
 ---
 ```
 
-**Public note (full + trusted + shachu + public):**
+**Public note (all four tiers):**
 ```markdown
 ---
 title: My Public Note
-publish-public: true
+publish: "[[Public]]"
 ---
 ```
 
-**Note:** The publish flags are hierarchical. Setting `publish-public: true` automatically includes the note in shachu and trusted tiers. Setting `publish-shachu: true` includes it in the trusted tier. You don't need to set multiple flags.
+**Note:** The publish values are hierarchical:
+- `publish: "[[Public]]"` → appears in all 4 tiers (vault, trusted, shachu, public)
+- `publish: "[[Shachu]]"` → appears in vault, trusted, and shachu tiers
+- `publish: "[[Trusted]]"` → appears in vault and trusted tiers only
+- No `publish` field or empty value → appears in vault tier only
+
+The wikilink format (`[[...]]`) works great in Obsidian and makes it easy to select from a dropdown!
 
 ### 2. Draft Notes
 
@@ -75,7 +82,7 @@ Notes marked as drafts are NEVER published, regardless of publish mode:
 ---
 title: Work in Progress
 draft: true
-publish-trusted: true
+publish: "[[Trusted]]"
 ---
 ```
 
@@ -115,19 +122,19 @@ All four projects pull from the same repositories (obsidian-vault and this Quart
 
 1. The `PublishMode` filter plugin checks frontmatter for the appropriate publish flag
 2. Depending on the mode:
-   - **full**: All files are published (no filtering by publish flags)
-   - **trusted**: Only files with `publish-trusted: true`, `publish-shachu: true`, or `publish-public: true` are published
-   - **shachu**: Only files with `publish-shachu: true` or `publish-public: true` are published
-   - **public**: Only files with `publish-public: true` are published
+   - **full**: All files are published (no publish field or empty)
+   - **trusted**: Only files with `publish: "[[Trusted]]"` (or Shachu/Public) are published
+   - **shachu**: Only files with `publish: "[[Shachu]]"` (or Public) are published
+   - **public**: Only files with `publish: "[[Public]]"` are published
 3. The `RemoveDrafts` filter always applies first (files with `draft: true` are never published in any mode)
 
 ## Example Workflow
 
 1. Write a note in Obsidian
-2. Initially, don't add any publish flags → note only appears on vault.dario.ca (full tier)
-3. When ready to share with trusted users, add `publish-trusted: true` → note now appears on vault.dario.ca and notes-private.dario.ca
-4. When ready to share with shachu, add `publish-shachu: true` → note now appears on vault.dario.ca, notes-private.dario.ca, and shachu.dario.ca
-5. When ready to share publicly, add `publish-public: true` → note now appears on all four sites
+2. Initially, don't add a `publish` field → note only appears on vault.dario.ca (full tier)
+3. When ready to share with trusted users, set `publish: "[[Trusted]]"` → note now appears on vault.dario.ca and notes-private.dario.ca
+4. When ready to share with shachu, set `publish: "[[Shachu]]"` → note now appears on vault.dario.ca, notes-private.dario.ca, and shachu.dario.ca
+5. When ready to share publicly, set `publish: "[[Public]]"` → note now appears on all four sites
 6. All four Cloudflare Pages projects will rebuild automatically when you push to git
 
 ## Adding More Modes
@@ -148,12 +155,12 @@ To add additional publish modes (e.g., `internal-publish`):
 
 ## Content Visibility Matrix
 
-| Note Type | vault.dario.ca (full) | notes-private.dario.ca (trusted) | shachu.dario.ca (shachu) | notes.dario.ca (public) |
-|-----------|----------------------|----------------------------------|--------------------------|-------------------------|
-| No frontmatter | ✅ | ❌ | ❌ | ❌ |
-| `publish-trusted: true` | ✅ | ✅ | ❌ | ❌ |
-| `publish-shachu: true` | ✅ | ✅ (hierarchical) | ✅ | ❌ |
-| `publish-public: true` | ✅ | ✅ (hierarchical) | ✅ (hierarchical) | ✅ |
+| Publish Field | vault.dario.ca (full) | notes-private.dario.ca (trusted) | shachu.dario.ca (shachu) | notes.dario.ca (public) |
+|---------------|----------------------|----------------------------------|--------------------------|-------------------------|
+| (no field or empty) | ✅ | ❌ | ❌ | ❌ |
+| `publish: "[[Trusted]]"` | ✅ | ✅ | ❌ | ❌ |
+| `publish: "[[Shachu]]"` | ✅ | ✅ (hierarchical) | ✅ | ❌ |
+| `publish: "[[Public]]"` | ✅ | ✅ (hierarchical) | ✅ (hierarchical) | ✅ |
 | `draft: true` | ❌ | ❌ | ❌ | ❌ |
 
-**Note:** The flags are hierarchical - `publish-public: true` automatically includes the note in shachu and trusted tiers. `publish-shachu: true` includes it in the trusted tier.
+**Note:** The values are hierarchical - `publish: "[[Public]]"` automatically includes the note in shachu and trusted tiers. `publish: "[[Shachu]]"` includes it in the trusted tier.

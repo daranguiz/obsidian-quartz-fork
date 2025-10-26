@@ -21,33 +21,45 @@ export const PublishMode: QuartzFilterPlugin<Options> = (userOpts) => {
   return {
     name: "PublishMode",
     shouldPublish(_ctx, [_tree, vfile]) {
-      // If no mode is specified or mode is "full", publish all content (backward compatible)
+      // If no mode is specified or mode is "full", publish all content
       if (!opts.mode || opts.mode === "full") {
         return true
       }
 
       const frontmatter = vfile.data?.frontmatter
+      const publishValue = frontmatter?.publish
+
+      // Helper to normalize the publish field value
+      // Handles: "[[Public]]", "Public", "public", etc.
+      // Empty or whitespace-only values count as null
+      const normalizePublishValue = (value: unknown): string | null => {
+        if (!value) return null
+        const str = String(value).trim()
+        if (str === "") return null  // Empty string counts as no publish field (Full)
+        const normalized = str.toLowerCase()
+        // Extract text from wikilinks: "[[Public]]" -> "public"
+        const match = normalized.match(/\[\[([^\]]+)\]\]/)
+        return match ? match[1].toLowerCase() : normalized
+      }
+
+      const normalized = normalizePublishValue(publishValue)
+
+      // No publish field or empty field = Full tier only
+      if (!normalized) {
+        return false  // Only shows in full mode
+      }
 
       // Check for the appropriate publish flag based on mode
-      // Hierarchical: publish-public implies publish-shachu implies publish-trusted
+      // Hierarchical: Public > Shachu > Trusted > Full
       if (opts.mode === "trusted") {
-        // Trusted tier includes publish-trusted, publish-shachu, and publish-public content
-        return (frontmatter?.["publish-trusted"] === true ||
-                frontmatter?.["publish-trusted"] === "true" ||
-                frontmatter?.["publish-shachu"] === true ||
-                frontmatter?.["publish-shachu"] === "true" ||
-                frontmatter?.["publish-public"] === true ||
-                frontmatter?.["publish-public"] === "true")
+        // Trusted tier includes: trusted, shachu, and public
+        return normalized === "trusted" || normalized === "shachu" || normalized === "public"
       } else if (opts.mode === "shachu") {
-        // Shachu tier includes publish-shachu and publish-public content
-        return (frontmatter?.["publish-shachu"] === true ||
-                frontmatter?.["publish-shachu"] === "true" ||
-                frontmatter?.["publish-public"] === true ||
-                frontmatter?.["publish-public"] === "true")
+        // Shachu tier includes: shachu and public
+        return normalized === "shachu" || normalized === "public"
       } else if (opts.mode === "public") {
-        // Public tier only includes publish-public content
-        return frontmatter?.["publish-public"] === true ||
-               frontmatter?.["publish-public"] === "true"
+        // Public tier only includes: public
+        return normalized === "public"
       }
 
       return false
