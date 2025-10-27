@@ -538,13 +538,26 @@ This conclusion is also visible to everyone.
 
 **What it does**: Renders a visible panel at the top of each page showing all frontmatter metadata (title, tags, custom fields, etc.)
 
-**Example**:
+**Visibility**: **Only shown on the Full tier** (vault.dario.ca). Hidden on all other tiers (Trusted, Shachu, Public).
+
+**Example** (Full tier only):
 ```
 ┌─────────────────────────┐
 │ title: My Note          │
 │ tags: [foo, bar]        │
-│ publish: [[Public]]     │
+│ created: 2025-10-26     │
 └─────────────────────────┘
+```
+
+**Rationale**: Frontmatter is internal metadata useful for vault management but shouldn't be exposed to external audiences.
+
+**Implementation**: The component checks `process.env.QUARTZ_PUBLISH_MODE` and returns `null` (nothing) if the mode is not "full":
+```typescript
+// In FrontmatterProperties component
+const publishMode = process.env.QUARTZ_PUBLISH_MODE || "full"
+if (publishMode !== "full") {
+  return null  // Don't render anything
+}
 ```
 
 **Status**: This feature is completely custom to this fork. Upstream Quartz does NOT display frontmatter properties as a visible panel.
@@ -556,6 +569,8 @@ beforeBody: [
   // ...
 ]
 ```
+
+**Note**: The `publish` field itself is already filtered out of the display (see lines 325-329) so it never appears even in the Full tier.
 
 ##### Orange Non-Existent Links (CUSTOM)
 

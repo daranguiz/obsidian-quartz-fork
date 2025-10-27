@@ -34,49 +34,6 @@ find public -type f -size +25M -delete
 - Better performance for large media files
 - Offload bandwidth from Cloudflare Pages
 
-### Remove YAML Frontmatter from Non-Full Tiers
-
-**Goal**: Strip the frontmatter properties section from pages on all tiers except Full (vault.dario.ca)
-
-**Current Behavior**: All tiers show the frontmatter properties panel (title, publish field, tags, etc.) at the top of each page
-
-**Desired Behavior**:
-- **Full tier (vault.dario.ca)**: Show all frontmatter properties (current behavior)
-- **Trusted/Shachu/Public tiers**: Hide the frontmatter properties section
-
-**Implementation Approach**:
-1. Modify the `FrontmatterProperties` component to check the publish mode
-2. Conditionally render based on `process.env.QUARTZ_PUBLISH_MODE`
-3. Alternative: Use layout configuration to conditionally include the component
-
-**Files to Modify**:
-- `quartz/components/FrontmatterProperties.tsx`
-- Or `quartz.layout.ts` (conditional component inclusion)
-
-**Rationale**: Frontmatter is internal metadata that's useful for vault management but shouldn't be exposed to external audiences.
-
-### Tier-Specific Configuration
-
-**Goal**: Allow each tier to have different visual themes, component layouts, or feature sets
-
-**Status**: Planned by Dario - not yet implemented
-
-**Examples**:
-- **Full tier**: Dark theme, graph view enabled, all features
-- **Trusted tier**: Light theme, graph view enabled, most features
-- **Shachu tier**: Custom theme, limited features
-- **Public tier**: Minimal theme, basic features only
-
-**Implementation Approach**:
-1. Create tier-specific configuration files or sections in `quartz.config.ts`
-2. Read `QUARTZ_PUBLISH_MODE` and apply appropriate configuration
-3. Conditionally include/exclude components based on tier
-4. Support different CSS themes per tier
-
-**Benefits**:
-- Better branding per audience
-- Reduce feature complexity on public-facing sites
-- Optimize each tier for its intended use case
 
 ---
 
@@ -237,6 +194,13 @@ These are enhancement ideas generated during documentation work. They are organi
 ## Completed Tasks
 
 *As tasks are completed, move them here with completion date*
+
+### ✅ Hide Frontmatter Properties on Non-Full Tiers
+**Completed**: 2025-10-26
+
+Modified the `FrontmatterProperties` component to only display frontmatter metadata on the Full tier (vault.dario.ca). All other tiers (Trusted, Shachu, Public) now hide the frontmatter properties panel, keeping internal metadata private while still publishing the content itself.
+
+**Implementation**: Added a check for `process.env.QUARTZ_PUBLISH_MODE` in [FrontmatterProperties.tsx](../quartz/components/FrontmatterProperties.tsx:320-324) that returns `null` when the mode is not "full".
 
 ### ✅ Index File Swapping System
 **Completed**: 2025-10-26

@@ -317,6 +317,12 @@ const FrontmatterProperties: QuartzComponent = ({
   allFiles,
   ctx,
 }: QuartzComponentProps) => {
+  // Only show frontmatter properties on the "full" tier
+  const publishMode = process.env.QUARTZ_PUBLISH_MODE || "full"
+  if (publishMode !== "full") {
+    return null
+  }
+
   const raw = fileData.frontmatterRaw
   if (!raw) {
     return null
