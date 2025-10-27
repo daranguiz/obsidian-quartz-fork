@@ -1,7 +1,7 @@
 import { QuartzConfig } from "../cfg"
 import { QuartzPluginData } from "../plugins/vfile"
 import { FileTrieNode } from "./fileTrie"
-import { FilePath, FullSlug, SimpleSlug } from "./path"
+import { FilePath, FullSlug } from "./path"
 
 export interface Argv {
   directory: string
@@ -21,22 +21,6 @@ export type BuildTimeTrieData = QuartzPluginData & {
   filePath: string
 }
 
-/** Whitelist of attachments to include in build */
-export interface AttachmentWhitelist {
-  paths: Set<FilePath>
-  stats: {
-    totalReferences: number
-    uniqueAttachments: number
-    pagesScanned: number
-  }
-  references?: Map<FilePath, Set<SimpleSlug>>
-}
-
-/** Shared state for cross-plugin communication */
-export interface BuildState {
-  attachmentWhitelist?: AttachmentWhitelist
-}
-
 export interface BuildCtx {
   buildId: string
   argv: Argv
@@ -45,7 +29,6 @@ export interface BuildCtx {
   allFiles: FilePath[]
   trie?: FileTrieNode<BuildTimeTrieData>
   incremental: boolean
-  state?: BuildState
 }
 
 export function trieFromAllFiles(allFiles: QuartzPluginData[]): FileTrieNode<BuildTimeTrieData> {

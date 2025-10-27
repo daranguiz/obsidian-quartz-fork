@@ -108,7 +108,6 @@ Remember: There are TWO repositories involved:
 |---------|----------------|------|
 | Multi-tier publishing | `quartz/plugins/filters/publishMode.ts` | Plugin (custom) |
 | Index swapping | `quartz/plugins/filters/indexSwapper.ts` | Plugin (custom) |
-| Attachment filtering | `quartz/plugins/filters/attachmentWhitelist.ts` | Plugin (custom) |
 | Frontmatter display | `quartz/components/FrontmatterProperties.tsx` | Component (custom) |
 | Orange broken links | CSS files in `quartz/styles/` | Styling (custom) |
 | Explorer filtering | `quartz.layout.ts` (filterFn) | Configuration (custom) |
@@ -370,10 +369,3 @@ rm -rf content && cp -r ~/Documents/Dario\ Vault content && npx quartz build
 
 *Last updated: 2025-10-26*
 *By: Claude (Sonnet 4.5)*
-
-## Active Technologies
-- TypeScript 5.9.2 with ESNext target, Node.js >=22 (001-filter-orphaned-attachments)
-- File-based content management; in-memory attachment whitelist during build (001-filter-orphaned-attachments)
-
-## Recent Changes
-- 001-filter-orphaned-attachments: Added TypeScript 5.9.2 with ESNext target, Node.js >=22
