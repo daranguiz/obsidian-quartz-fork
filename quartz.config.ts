@@ -80,6 +80,7 @@ const config: QuartzConfig = {
       Plugin.PublishMode({
         mode: process.env.QUARTZ_PUBLISH_MODE as "trusted" | "public" | undefined,
       }),
+      Plugin.AttachmentWhitelist({ verbose: false }), // Must run AFTER PublishMode to scan only published pages
     ],
     emitters: [
       Plugin.AliasRedirects(),
