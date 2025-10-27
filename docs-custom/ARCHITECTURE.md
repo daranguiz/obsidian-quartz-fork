@@ -572,19 +572,34 @@ beforeBody: [
 
 **Note**: The `publish` field itself is already filtered out of the display (see lines 325-329) so it never appears even in the Full tier.
 
-##### Orange Non-Existent Links (CUSTOM)
+##### Tiered Orphaned Link Styling (CUSTOM)
 
-**What it does**: Internal links that point to non-existent pages are styled in orange instead of the default styling
+**What it does**: Internal links that point to non-existent pages are styled differently depending on the publish mode.
 
-**Purpose**: Makes it obvious which links are broken or point to unpublished content
+**Purpose**:
+- On the **Full tier**: Makes it obvious which links are broken or point to filtered-out content
+- On **non-Full tiers** (Trusted, Shachu, Public): Hides the fact that links are broken to avoid exposing the existence of private content
 
-**Visual**:
-- Blue link → Page exists
-- Orange link → Page doesn't exist (404 or filtered out)
+**Visual Behavior by Tier**:
+- **Full tier**:
+  - Blue link with highlight → Page exists
+  - Faded blue link → Page doesn't exist (404 or filtered out)
+  - Orange `.dead-link` class → Missing page (in FrontmatterProperties)
+- **Non-Full tiers** (Trusted, Shachu, Public):
+  - Blue link with highlight → Page exists
+  - Plain text (no styling) → Page doesn't exist
+  - Non-clickable, looks like regular body text
 
-**Status**: Completely custom to this fork. Upstream Quartz may style broken links differently, but the orange color scheme is custom.
+**Status**: Completely custom to this fork. Upstream Quartz may style broken links differently, but the tiered behavior is entirely custom.
 
-**Implementation**: Custom CSS styling for broken internal links
+**Implementation**:
+- CSS conditional styling using `body[data-publish-mode]` attribute selector
+- Broken links (`.internal.broken` class) styled differently per tier
+- Dead links (`.dead-link` class in FrontmatterProperties) styled differently per tier
+- Files modified:
+  - [quartz/components/renderPage.tsx:235-239](quartz/components/renderPage.tsx#L235-L239) - Adds `data-publish-mode` attribute to body
+  - [quartz/styles/base.scss:93-116](quartz/styles/base.scss#L93-L116) - Conditional `.internal.broken` styling
+  - [quartz/styles/custom.scss:5-27](quartz/styles/custom.scss#L5-L27) - Conditional `.dead-link` styling
 
 ### Plugin Execution Order
 

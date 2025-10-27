@@ -90,12 +90,28 @@ a {
     border-radius: 5px;
     line-height: 1.4rem;
 
-    &.broken {
-      color: var(--secondary);
-      opacity: 0.5;
-      transition: opacity 0.2s ease;
-      &:hover {
-        opacity: 0.8;
+    // Only show broken link styling on full tier
+    body[data-publish-mode="full"] & {
+      &.broken {
+        color: var(--secondary);
+        opacity: 0.5;
+        transition: opacity 0.2s ease;
+        &:hover {
+          opacity: 0.8;
+        }
+      }
+    }
+
+    // On non-full tiers, make broken links look like regular text
+    body:not([data-publish-mode="full"]) & {
+      &.broken {
+        color: inherit;
+        opacity: 1;
+        font-weight: normal;
+        background-color: transparent;
+        padding: 0;
+        cursor: text;
+        pointer-events: none;
       }
     }
 

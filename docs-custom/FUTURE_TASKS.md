@@ -251,6 +251,22 @@ These are enhancement ideas generated during documentation work. They are organi
 
 *As tasks are completed, move them here with completion date*
 
+### ✅ Tiered Orphaned Link Styling
+**Completed**: 2025-10-26
+
+Implemented conditional styling for broken/orphaned links based on publish mode to prevent leaking information about private content on lower trust tiers.
+
+**Behavior**:
+- **Full tier**: Broken links are visually distinct (faded blue for `.internal.broken`, orange for `.dead-link`) to help identify missing/filtered content
+- **Non-Full tiers** (Trusted, Shachu, Public): Broken links appear as plain text with no special styling, hiding the fact that content exists but is filtered out
+
+**Implementation**:
+- Added `data-publish-mode` attribute to body element in [renderPage.tsx:235-239](../quartz/components/renderPage.tsx#L235-L239)
+- CSS conditional styling in [base.scss:93-116](../quartz/styles/base.scss#L93-L116) for `.internal.broken` links
+- CSS conditional styling in [custom.scss:5-27](../quartz/styles/custom.scss#L5-L27) for `.dead-link` class
+
+**Security Benefit**: Prevents users on lower-trust tiers from inferring the existence of private content by observing broken link styling.
+
 ### ✅ Hide Frontmatter Properties on Non-Full Tiers
 **Completed**: 2025-10-26
 
