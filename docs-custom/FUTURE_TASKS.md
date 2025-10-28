@@ -12,6 +12,60 @@ This document tracks planned enhancements and known issues that need to be addre
 
 These are tasks explicitly requested by Dario and take priority over AI-generated suggestions.
 
+### Posthumous Vault Access Expansion
+
+**Goal**: When Dario passes away, significantly expand access to the vault (Level 0 - Full) tier to a larger group of people.
+
+**Current State**:
+- Level 0 - Full (vault.dario.ca) is highly restricted via Cloudflare Zero Trust
+- Access is limited to Dario's personal Google account
+- Other tiers have wider but still controlled access
+
+**Challenges**:
+- How to trigger the access expansion (automatic vs. manual by executor)
+- How to define "significantly larger group" (friends, family, tea community, etc.)
+- How to manage the transition (immediate vs. gradual)
+- How to preserve privacy while honoring the desire to share knowledge
+
+**Possible Approaches**:
+
+1. **Dead Man's Switch + Pre-configured Access List**:
+   - Set up a dead man's switch service (requires periodic check-ins)
+   - Pre-configure Cloudflare Zero Trust with a larger email list (disabled)
+   - Switch automatically enables the expanded access list
+   - Pros: Automatic, no executor action needed
+   - Cons: Risk of false triggers, requires maintenance
+
+2. **Executor-Triggered with Documentation**:
+   - Document clear instructions for executor/trusted person
+   - Provide pre-written Cloudflare access policy with expanded list
+   - Executor manually updates access policy when the time comes
+   - Pros: Human oversight, no false triggers
+   - Cons: Requires trusted executor with technical ability
+
+3. **Tiered Transition Approach**:
+   - Phase 1: Promote all Level 0 content to Level 1 (Trusted)
+   - Phase 2: Expand Level 1 access list to larger group
+   - Phase 3: Eventually make some/all content Level 3 (Public)
+   - Pros: Gradual, allows for selective sharing
+   - Cons: More complex to execute
+
+4. **Archive + Public Donation**:
+   - Export full vault content
+   - Donate to Internet Archive, university library, or tea organization
+   - Make publicly accessible as a knowledge resource
+   - Pros: Permanent preservation, widest access
+   - Cons: Loss of access control, privacy concerns
+
+**Questions to Consider**:
+- Who should have access? (List of names/emails, or criteria like "tea community members")
+- Should any content remain private even posthumously?
+- Should there be a waiting period before expansion?
+- What about content that mentions other living people?
+- Should the vault be read-only or allow community contributions?
+
+**Priority**: LOW (but important to document and plan)
+
 ### Orphaned Attachments Not Removed When Source Pages Are Filtered
 
 **Problem**: When pages are filtered out by publish mode, their attachments (images, PDFs, etc.) are still included in the build even if no remaining pages link to them.
