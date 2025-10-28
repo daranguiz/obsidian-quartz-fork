@@ -30,35 +30,40 @@ export const PublishMode: QuartzFilterPlugin<Options> = (userOpts) => {
       const publishValue = frontmatter?.publish
 
       // Helper to normalize the publish field value
-      // Handles: "[[Public]]", "Public", "public", etc.
+      // Handles: "[[Level 3 - Public]]", "Level 3 - Public", "public", etc.
       // Empty or whitespace-only values count as null
       const normalizePublishValue = (value: unknown): string | null => {
         if (!value) return null
         const str = String(value).trim()
-        if (str === "") return null  // Empty string counts as no publish field (Full)
+        if (str === "") return null  // Empty string counts as no publish field (Level 0 - Full)
         const normalized = str.toLowerCase()
-        // Extract text from wikilinks: "[[Public]]" -> "public"
+        // Extract text from wikilinks: "[[Level 3 - Public]]" -> "level 3 - public"
         const match = normalized.match(/\[\[([^\]]+)\]\]/)
-        return match ? match[1].toLowerCase() : normalized
+        const extracted = match ? match[1].toLowerCase() : normalized
+
+        // Map level names to simple mode names for comparison
+        // "level 0 - full" -> "full", "level 1 - trusted" -> "trusted", etc.
+        const levelMatch = extracted.match(/level \d+ - (\w+)/)
+        return levelMatch ? levelMatch[1] : extracted
       }
 
       const normalized = normalizePublishValue(publishValue)
 
-      // No publish field or empty field = Full tier only
+      // No publish field or empty field = Level 0 - Full tier only
       if (!normalized) {
         return false  // Only shows in full mode
       }
 
       // Check for the appropriate publish flag based on mode
-      // Hierarchical: Public > Shachu > Trusted > Full
+      // Hierarchical: Level 3 - Public > Level 2 - Shachu > Level 1 - Trusted > Level 0 - Full
       if (opts.mode === "trusted") {
-        // Trusted tier includes: trusted, shachu, and public
+        // Level 1 - Trusted tier includes: trusted, shachu, and public
         return normalized === "trusted" || normalized === "shachu" || normalized === "public"
       } else if (opts.mode === "shachu") {
-        // Shachu tier includes: shachu and public
+        // Level 2 - Shachu tier includes: shachu and public
         return normalized === "shachu" || normalized === "public"
       } else if (opts.mode === "public") {
-        // Public tier only includes: public
+        // Level 3 - Public tier only includes: public
         return normalized === "public"
       }
 

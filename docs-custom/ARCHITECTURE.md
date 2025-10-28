@@ -117,7 +117,7 @@ This approach gives us:
 
 The system publishes the **same content source** to **four different websites**, each with progressively more restrictive content filtering.
 
-### Tier 1: Full (vault.dario.ca) - Most Permissive
+### Level 0 - Full (vault.dario.ca) - Most Permissive
 
 **Audience**: Highly restricted, personal access only
 **Content Included**: ALL notes (except drafts)
@@ -126,53 +126,53 @@ The system publishes the **same content source** to **four different websites**,
 
 **Use Case**: Personal vault access from anywhere, complete view of all content
 
-### Tier 2: Trusted (notes-private.dario.ca)
+### Level 1 - Trusted (notes-private.dario.ca)
 
 **Audience**: Trusted users with broader access
-**Content Included**: ONLY notes with `publish: "[[Trusted]]"` or higher (Shachu, Public)
+**Content Included**: ONLY notes with `publish: "[[Level 1 - Trusted]]"` or higher (Shachu, Public)
 **Access Control**: Cloudflare Zero Trust (restricted to trusted users)
-**Frontmatter Requirement**: `publish: "[[Trusted]]"`, `publish: "[[Shachu]]"`, or `publish: "[[Public]]"`
+**Frontmatter Requirement**: `publish: "[[Level 1 - Trusted]]"`, `publish: "[[Level 2 - Shachu]]"`, or `publish: "[[Level 3 - Public]]"`
 
 **Use Case**: Sharing more personal content with close friends, family, or trusted colleagues
 
-### Tier 3: Shachu (shachu.dario.ca)
+### Level 2 - Shachu (shachu.dario.ca)
 
 **Audience**: Shachu members
-**Content Included**: ONLY notes with `publish: "[[Shachu]]"` or `publish: "[[Public]]"`
+**Content Included**: ONLY notes with `publish: "[[Level 2 - Shachu]]"` or `publish: "[[Level 3 - Public]]"`
 **Access Control**: Cloudflare Zero Trust (restricted to shachu members)
-**Frontmatter Requirement**: `publish: "[[Shachu]]"` or `publish: "[[Public]]"`
+**Frontmatter Requirement**: `publish: "[[Level 2 - Shachu]]"` or `publish: "[[Level 3 - Public]]"`
 
 **Use Case**: Content specific to shachu activities and members
 
-### Tier 4: Public (notes.dario.ca) - Most Restrictive
+### Level 3 - Public (notes.dario.ca) - Most Restrictive
 
 **Audience**: General public, unrestricted access
-**Content Included**: ONLY notes with `publish: "[[Public]]"`
+**Content Included**: ONLY notes with `publish: "[[Level 3 - Public]]"`
 **Access Control**: None - fully public
-**Frontmatter Requirement**: `publish: "[[Public]]"`
+**Frontmatter Requirement**: `publish: "[[Level 3 - Public]]"`
 
 **Use Case**: Blog posts, public documentation, content intended for wide distribution
 
 ### Hierarchical Publishing Matrix
 
-| Frontmatter Value | vault.dario.ca (full) | notes-private.dario.ca (trusted) | shachu.dario.ca (shachu) | notes.dario.ca (public) |
+| Frontmatter Value | vault.dario.ca (Level 0 - Full) | notes-private.dario.ca (Level 1 - Trusted) | shachu.dario.ca (Level 2 - Shachu) | notes.dario.ca (Level 3 - Public) |
 |-------------------|----------------------|----------------------------------|--------------------------|-------------------------|
 | (no field or empty) | ✅ Published | ❌ Filtered | ❌ Filtered | ❌ Filtered |
-| `publish: "[[Trusted]]"` | ✅ Published | ✅ Published | ❌ Filtered | ❌ Filtered |
-| `publish: "[[Shachu]]"` | ✅ Published | ✅ Published (hierarchical) | ✅ Published | ❌ Filtered |
-| `publish: "[[Public]]"` | ✅ Published | ✅ Published (hierarchical) | ✅ Published (hierarchical) | ✅ Published |
+| `publish: "[[Level 1 - Trusted]]"` | ✅ Published | ✅ Published | ❌ Filtered | ❌ Filtered |
+| `publish: "[[Level 2 - Shachu]]"` | ✅ Published | ✅ Published (hierarchical) | ✅ Published | ❌ Filtered |
+| `publish: "[[Level 3 - Public]]"` | ✅ Published | ✅ Published (hierarchical) | ✅ Published (hierarchical) | ✅ Published |
 | `draft: true` | ❌ Filtered | ❌ Filtered | ❌ Filtered | ❌ Filtered |
 
-**Note**: The hierarchy means that `publish: "[[Public]]"` automatically makes content visible in all four tiers. Each tier includes its own level plus all higher (more public) levels.
+**Note**: The hierarchy means that `publish: "[[Level 3 - Public]]"` automatically makes content visible in all four tiers. Each tier includes its own level plus all higher (more public) levels.
 
 ### Index Files Per Tier
 
 Each tier can have its own custom landing page:
 
-- `content/index.md` - Full tier (vault.dario.ca) - No publish field
-- `content/index-trusted.md` - Trusted tier - `publish: "[[Trusted]]"`
-- `content/index-shachu.md` - Shachu tier - `publish: "[[Shachu]]"`
-- `content/index-public.md` - Public tier - `publish: "[[Public]]"`
+- `content/index.md` - Level 0 - Full tier (vault.dario.ca) - No publish field
+- `content/index-trusted.md` - Level 1 - Trusted tier - `publish: "[[Level 1 - Trusted]]"`
+- `content/index-shachu.md` - Level 2 - Shachu tier - `publish: "[[Level 2 - Shachu]]"`
+- `content/index-public.md` - Level 3 - Public tier - `publish: "[[Level 3 - Public]]"`
 
 The **IndexSwapper** plugin automatically:
 1. Selects the correct index file for the current publish mode
@@ -418,15 +418,15 @@ This fork includes several custom features not present in upstream Quartz.
 - Reads `QUARTZ_PUBLISH_MODE` environment variable (set via `--publish-mode` CLI flag)
 - Checks each file's `publish` frontmatter field
 - Returns `true` (publish) or `false` (filter out) based on hierarchical rules
-- Supports wikilink format: `[[Public]]`, `[[Shachu]]`, `[[Trusted]]`
+- Supports wikilink format: `[[Level 3 - Public]]`, `[[Level 2 - Shachu]]`, `[[Level 1 - Trusted]]`
 
 **Example**:
 ```typescript
 // In trusted mode
-publish: "[[Trusted]]" → ✅ Published
-publish: "[[Shachu]]"  → ✅ Published (hierarchical)
-publish: "[[Public]]"  → ✅ Published (hierarchical)
-(no field)             → ❌ Filtered
+publish: "[[Level 1 - Trusted]]" → ✅ Published
+publish: "[[Level 2 - Shachu]]"  → ✅ Published (hierarchical)
+publish: "[[Level 3 - Public]]"  → ✅ Published (hierarchical)
+(no field)                        → ❌ Filtered
 ```
 
 **Status**: Completely custom to this fork
@@ -508,7 +508,7 @@ This content is visible in full, trusted, and shachu
 ```markdown
 ---
 title: My Index Page
-publish: "[[Public]]"
+publish: "[[Level 3 - Public]]"
 ---
 
 # Welcome
@@ -791,10 +791,10 @@ Cloudflare Dashboard → Zero Trust → Access → Applications
 - Verify the 120-second debounce completed
 
 **Wrong content appearing on a tier?**
-- Verify `publish` frontmatter field is set correctly (use wikilink format: `[[Public]]`)
+- Verify `publish` frontmatter field is set correctly (use wikilink format: `[[Level 3 - Public]]`)
 - Check that PublishMode plugin logic matches expectations
 - Review build logs to see how many files were filtered
-- Remember the hierarchy: Public content appears on all tiers
+- Remember the hierarchy: Level 3 - Public content appears on all tiers
 
 **Build failing?**
 - Check that `GH_TOKEN` environment variable is set in Cloudflare Pages project settings
@@ -805,9 +805,9 @@ Cloudflare Dashboard → Zero Trust → Access → Applications
 **Index page not swapping correctly?**
 - Ensure tier-specific index files exist with correct frontmatter:
   - `index.md` - no publish field
-  - `index-trusted.md` - `publish: "[[Trusted]]"`
-  - `index-shachu.md` - `publish: "[[Shachu]]"`
-  - `index-public.md` - `publish: "[[Public]]"`
+  - `index-trusted.md` - `publish: "[[Level 1 - Trusted]]"`
+  - `index-shachu.md` - `publish: "[[Level 2 - Shachu]]"`
+  - `index-public.md` - `publish: "[[Level 3 - Public]]"`
 - Check IndexSwapper plugin is before PublishMode in filter chain (see `quartz.config.ts`)
 - Verify index files have appropriate `publish` values
 

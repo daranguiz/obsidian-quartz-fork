@@ -6,10 +6,10 @@ import { QuartzFilterPlugin } from "../types"
  * Filters out unused index files based on publish mode and renames the appropriate one.
  *
  * File naming convention:
- * - index.md         → Full tier (vault.dario.ca)
- * - index-trusted.md → Trusted tier (notes-private.dario.ca)
- * - index-shachu.md  → Shachu tier (shachu.dario.ca)
- * - index-public.md  → Public tier (notes.dario.ca)
+ * - index.md         → Level 0 - Full tier (vault.dario.ca)
+ * - index-trusted.md → Level 1 - Trusted tier (notes-private.dario.ca)
+ * - index-shachu.md  → Level 2 - Shachu tier (shachu.dario.ca)
+ * - index-public.md  → Level 3 - Public tier (notes.dario.ca)
  *
  * The plugin:
  * 1. Renames the tier-specific index to "index"
@@ -48,9 +48,9 @@ export const IndexSwapper: QuartzFilterPlugin = () => {
           // Map publish modes to their frontmatter values
           const publishModeMap: Record<string, string> = {
             full: "",  // Empty for full mode (all content)
-            trusted: "[[Trusted]]",
-            shachu: "[[Shachu]]",
-            public: "[[Public]]",
+            trusted: "[[Level 1 - Trusted]]",
+            shachu: "[[Level 2 - Shachu]]",
+            public: "[[Level 3 - Public]]",
           }
 
           // Set the publish field to the appropriate value for this mode

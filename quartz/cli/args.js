@@ -109,7 +109,7 @@ export const BuildArgv = {
     string: true,
     alias: ["pm"],
     choices: ["full", "trusted", "shachu", "public"],
-    describe: "filter content by publish mode (full, publish-trusted, publish-shachu, or publish-public frontmatter)",
+    describe: "filter content by publish mode (Level 0 - Full, Level 1 - Trusted, Level 2 - Shachu, or Level 3 - Public)",
   },
   baseUrl: {
     string: true,
