@@ -68,7 +68,7 @@ export const AttachmentWhitelist: QuartzFilterPlugin<Partial<Options>> = (userOp
       if (opts.verbose) {
         const newAttachments = whitelist.paths.size - beforeSize
         console.log(
-          `[AttachmentWhitelist] ${String(vfile.data.slug)}: found ${attachments.size} refs (${newAttachments} new)`,
+          `[AttachmentWhitelist] ${String(vfile.data.slug)}: found ${attachments.size} refs (${newAttachments} new unique), total whitelist size: ${whitelist.paths.size}`,
         )
       }
 

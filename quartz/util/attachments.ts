@@ -55,7 +55,11 @@ export function extractAttachments(
     // Normalize path
     try {
       const decoded = decodeURIComponent(src)
-      const normalized = slugifyFilePath(decoded as FilePath) as unknown as FilePath
+      let normalized = slugifyFilePath(decoded as FilePath) as unknown as FilePath
+
+      // Strip relative path prefixes (../, ./) to match against absolute paths
+      normalized = normalized.replace(/^(\.\.\/)+/, "").replace(/^\.\//, "") as FilePath
+
       attachments.add(normalized)
 
       if (opts?.verbose) {
@@ -80,6 +84,10 @@ export type FileFilterResult =
 
 /**
  * Determine if an attachment should be copied based on whitelist
+ *
+ * Note: Files can be referenced in markdown either by full path or basename only,
+ * depending on the link resolution strategy (e.g., "shortest" in Obsidian/Quartz).
+ * This function checks both to handle all cases correctly.
  */
 export function shouldCopyAttachment(
   filePath: FilePath | string,
@@ -97,9 +105,18 @@ export function shouldCopyAttachment(
     return { action: "copy", reason: "no-whitelist" }
   }
 
-  // Check whitelist
+  // Check whitelist with both full path and basename
   const normalized = slugifyFilePath(path as FilePath) as unknown as FilePath
+
+  // Check full path first
   if (whitelist.paths.has(normalized)) {
+    return { action: "copy", reason: "whitelisted" }
+  }
+
+  // Check basename only (for files referenced by filename alone)
+  // This handles cases where markdownLinkResolution: "shortest" is used
+  const basename = normalized.split("/").pop() as FilePath
+  if (basename && whitelist.paths.has(basename)) {
     return { action: "copy", reason: "whitelisted" }
   }
 

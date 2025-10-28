@@ -66,6 +66,27 @@ As a vault owner with organized media files, I need the system to correctly hand
 
 ---
 
+## Bug Fixes
+
+### Path Normalization Mismatch (2025-10-27)
+
+**Issue**: Initial implementation incorrectly marked files as orphaned when they were referenced by basename only (e.g., `[PDF](file.pdf)`) but stored in subdirectories (`path/to/file.pdf`).
+
+**Root Cause**: Mismatch between what gets stored in the whitelist vs. what gets checked:
+- **Whitelist stores**: Slugified paths extracted from HTML after link transformation. With `markdownLinkResolution: "shortest"`, unique filenames are transformed to just the basename (e.g., `cq-13-chaji_shozumi.pdf`)
+- **Assets emitter checks**: Full file paths from disk, slugified (e.g., `tea-resources/bibliography/chanoyu-quarterly/pdfs/cq-13-chaji_shozumi.pdf`)
+- **Result**: Comparison fails, files incorrectly marked as orphaned
+
+**Fix**: Modified `shouldCopyAttachment()` in [attachments.ts](quartz/util/attachments.ts#L88-L120) to check **both**:
+1. Full slugified path (existing behavior)
+2. Basename only of the slugified path (new behavior)
+
+This accounts for Quartz's "shortest" link resolution strategy where files can be referenced by just their filename if unique.
+
+**Validation**: Tested with Chanoyu Quarterly Overview file which has 100+ PDF links in subdirectories using basename-only references.
+
+---
+
 ### Edge Cases
 
 - What happens when an attachment path contains spaces, special characters, or non-ASCII characters?
