@@ -66,61 +66,6 @@ These are tasks explicitly requested by Dario and take priority over AI-generate
 
 **Priority**: LOW (but important to document and plan)
 
-### Orphaned Attachments Not Removed When Source Pages Are Filtered
-
-**Problem**: When pages are filtered out by publish mode, their attachments (images, PDFs, etc.) are still included in the build even if no remaining pages link to them.
-
-**Example Scenario**:
-1. Page A has `publish: "[[Trusted]]"` and contains `![image](attachment.png)`
-2. Page A is correctly filtered out when building Public tier
-3. However, `attachment.png` is still copied to the public site
-4. The attachment is accessible directly via URL even though no published page links to it
-
-**Security Impact**:
-- **HIGH** - Private attachments may be exposed on public tiers
-- Attachments from filtered pages remain accessible if someone knows/guesses the URL
-- This defeats the purpose of the tiered publishing system for media files
-
-**Current Behavior**:
-- Filter plugins (PublishMode, IndexSwapper) only filter markdown files
-- Emitter plugins copy ALL assets from the content folder
-- No mechanism to track which attachments are actually referenced by published pages
-
-**Desired Behavior**:
-- Only include attachments that are referenced by at least one published page
-- If all pages linking to an attachment are filtered out, the attachment should not be emitted
-- Track references during the transformer phase and filter during emit phase
-
-**Proposed Solution**:
-1. **Option A - Filter Plugin for Attachments**:
-   - Create a new filter plugin that runs after PublishMode
-   - Parse all published markdown files for attachment references
-   - Build a whitelist of referenced attachments
-   - Filter out unreferenced attachments during emit
-
-2. **Option B - Custom Emitter Plugin**:
-   - Modify or wrap the Assets emitter plugin
-   - Before copying assets, scan all published pages for references
-   - Only emit assets that are actually linked from published content
-
-3. **Option C - Post-Build Cleanup**:
-   - After build completes, scan HTML files for asset references
-   - Delete any assets in `public/` that aren't referenced
-   - Simpler but happens after the fact
-
-**Implementation Considerations**:
-- Need to handle various attachment types: images, PDFs, videos, audio
-- Need to parse multiple markdown link formats: `![[file]]`, `![](file)`, `[link](file)`
-- Need to handle attachments in subdirectories
-- Consider Obsidian attachment folder structure
-- Performance: scanning all files could be slow for large vaults
-
-**Files to Investigate**:
-- `quartz/plugins/emitters/assets.ts` - How assets are currently emitted
-- `quartz/plugins/filters/*.ts` - Pattern for filtering
-- `quartz/plugins/transformers/*.ts` - Where link parsing happens
-
-**Priority**: HIGH - This is a security issue that could expose private content
 
 ### Large File Handling (CDN Migration)
 
@@ -304,6 +249,30 @@ These are enhancement ideas generated during documentation work. They are organi
 ## Completed Tasks
 
 *As tasks are completed, move them here with completion date*
+
+### ✅ Orphaned Attachment Filtering
+**Completed**: 2025-10-28
+
+Implemented comprehensive orphaned attachment filtering to prevent private attachments from being exposed on lower-trust tiers.
+
+**Problem Solved**: When pages were filtered out by publish mode, their attachments (images, PDFs, etc.) were still included in the build and accessible via direct URL, defeating the purpose of tiered publishing for media files.
+
+**Solution**:
+- Created `AttachmentWhitelist` filter plugin that scans all published pages and builds a whitelist of referenced attachments
+- Modified `Assets` emitter to check attachments against the whitelist before copying
+- Only attachments referenced by published pages are included in the build
+- Handles multiple link formats: `![[file]]`, `![](file)`, `[link](file)`
+- Handles path normalization issues (relative paths, basenames, slugification)
+
+**Implementation**:
+- New filter plugin: [attachmentWhitelist.ts](../quartz/plugins/filters/attachmentWhitelist.ts)
+- Utility functions: [attachments.ts](../quartz/util/attachments.ts)
+- Modified emitter: [assets.ts](../quartz/plugins/emitters/assets.ts)
+- Registered in [quartz.config.ts](../quartz.config.ts) after PublishMode filter
+
+**Validation**: Tested with 20+ attachments across different tiers. Successfully filters 277 orphaned attachments while copying 89 referenced ones in Shachu build.
+
+**Security Benefit**: Prevents exposure of private attachments (like Gyo no Shin PDFs, teaching log images, etc.) on lower-trust tiers where the source pages are filtered out.
 
 ### ✅ Tiered Orphaned Link Styling
 **Completed**: 2025-10-26
