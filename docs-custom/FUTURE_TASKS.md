@@ -90,6 +90,12 @@ find public -type f -size +25M -delete
 - Offload bandwidth from Cloudflare Pages
 
 
+### Migrate Dataview usage to native Obsidian Bases 
+
+I use Dataview queries heavily in my vault, both using the Dataview query syntax as well as dataviewjs. Obsidian has a new Core Plugin called Bases that handles most of my dataview uses, except natively and much faster than dataview. 
+
+Bases is still under development, so I'm not sure I want to make sweeping changes yet. But I'm definitely interested in migrating everything over to Bases at some point.
+
 ---
 
 ## AI-Generated Suggestions
