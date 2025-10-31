@@ -73,6 +73,7 @@ const config: QuartzConfig = {
       Plugin.CrawlLinks({ markdownLinkResolution: "shortest" }),
       Plugin.Description(),
       Plugin.Latex({ renderEngine: "katex" }),
+      Plugin.LargeFileDetector(), // Detect large files after PublishMode filter
     ],
     filters: [
       Plugin.RemoveDrafts(),
@@ -98,6 +99,7 @@ const config: QuartzConfig = {
       Plugin.NotFoundPage(),
       // Comment out CustomOgImages to speed up build time
       Plugin.CustomOgImages(),
+      Plugin.CDNUploader(), // Upload large files to R2 CDN
     ],
   },
 }

@@ -67,29 +67,6 @@ These are tasks explicitly requested by Dario and take priority over AI-generate
 **Priority**: LOW (but important to document and plan)
 
 
-### Large File Handling (CDN Migration)
-
-**Problem**: Cloudflare Pages has a 25MB file size limit. Currently, the build process deletes files over 25MB, causing them to return 404 errors.
-
-**Current Workaround**:
-```bash
-find public -type f -size +25M -delete
-```
-
-**Proposed Solution**:
-- Set up a CDN (Cloudflare R2, AWS S3, or similar) for large files
-- Add a Quartz transformer plugin to:
-  - Detect links to large files during build
-  - Upload large files to CDN
-  - Rewrite links to point to CDN URLs
-- Update `.gitignore` or build process to handle large files appropriately
-
-**Benefits**:
-- All content accessible (no 404s)
-- Better performance for large media files
-- Offload bandwidth from Cloudflare Pages
-
-
 ### Migrate Dataview usage to native Obsidian Bases 
 
 I use Dataview queries heavily in my vault, both using the Dataview query syntax as well as dataviewjs. Obsidian has a new Core Plugin called Bases that handles most of my dataview uses, except natively and much faster than dataview. 
@@ -255,6 +232,51 @@ These are enhancement ideas generated during documentation work. They are organi
 ## Completed Tasks
 
 *As tasks are completed, move them here with completion date*
+
+### ✅ Large File Handling (CDN Migration)
+**Completed**: 2025-10-31
+
+Implemented comprehensive CDN handling for files over 20MB to bypass Cloudflare Pages' 25MB file size limit.
+
+**Problem Solved**: Large files (>25MB) were deleted during build, causing 404 errors. No proper CDN integration existed.
+
+**Solution**:
+- Created Cloudflare R2 CDN infrastructure with 4 buckets (one per tier)
+- Implemented `LargeFileDetector` transformer plugin to detect files >20MB during build
+- Implemented `CDNUploader` emitter plugin to upload files to appropriate R2 bucket
+- Files automatically uploaded to correct tier-specific CDN:
+  - `vault-files-full` → `cdn-full.dario.ca`
+  - `vault-files-trusted` → `cdn-trusted.dario.ca`
+  - `vault-files-shachu` → `cdn-shachu.dario.ca`
+  - `vault-files-public` → `cdn-public.dario.ca`
+- SHA-256 file hashing for deduplication and idempotent uploads
+- Exponential backoff retry (3 attempts: 1s, 2s, 4s delays)
+- Parallel uploads for >50 files (batches of 10 concurrent uploads)
+- Automatic orphan detection and cleanup
+- File growth detection (15MB file growing to 25MB automatically migrated)
+
+**Security Integration**:
+- Each CDN domain protected by Cloudflare Zero Trust Access policies
+- Access levels map to existing tier hierarchy
+- Multi-reference files uploaded to least restrictive tier
+- Direct URL access blocked by Zero Trust for restricted tiers
+
+**Implementation**:
+- Transformer plugin: [largefile.ts](../quartz/plugins/transformers/largefile.ts)
+- Emitter plugin: [cdnUploader.ts](../quartz/plugins/emitters/cdnUploader.ts)
+- Utilities: [cdn.ts](../quartz/util/cdn.ts), [hash.ts](../quartz/util/hash.ts)
+- Type definitions: [cfg.ts](../quartz/cfg.ts) - Added R2Configuration interface
+- Registered in [quartz.config.ts](../quartz.config.ts)
+- Infrastructure setup guide: [specs/002-large-file-handling/quickstart.md](../specs/002-large-file-handling/quickstart.md)
+
+**Performance**: Build time increase <30% with linear scaling to 50 files, parallel uploads beyond 50.
+
+**Benefits**:
+- All content accessible (no 404s for large files)
+- Better performance for large media files
+- Offloaded bandwidth from Cloudflare Pages to R2 CDN
+- Maintains tier-based security model
+- Automatic cleanup prevents CDN bloat
 
 ### ✅ Orphaned Attachment Filtering
 **Completed**: 2025-10-28

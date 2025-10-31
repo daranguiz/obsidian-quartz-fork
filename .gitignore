@@ -7,6 +7,8 @@ tsconfig.tsbuildinfo
 .obsidian
 .quartz-cache
 private/
+.env
+.env.local
 .replit
 replit.nix
 content/

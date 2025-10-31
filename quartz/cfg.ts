@@ -51,6 +51,29 @@ export type Analytics =
       provider: "vercel"
     }
 
+export interface R2Configuration {
+  /** R2 endpoint URL (e.g., https://<account-id>.r2.cloudflarestorage.com) */
+  endpoint: string
+  /** R2 API access key ID */
+  accessKeyId: string
+  /** R2 API secret access key */
+  secretAccessKey: string
+  /** CDN domain mapping for each access level */
+  cdnDomains: {
+    full: string
+    trusted: string
+    shachu: string
+    public: string
+  }
+  /** R2 bucket names for each access level */
+  buckets: {
+    full: string
+    trusted: string
+    shachu: string
+    public: string
+  }
+}
+
 export interface GlobalConfiguration {
   pageTitle: string
   pageTitleSuffix?: string
@@ -78,6 +101,8 @@ export interface GlobalConfiguration {
    * Region Codes: https://en.wikipedia.org/wiki/ISO_3166-1_alpha-2
    */
   locale: ValidLocale
+  /** R2 configuration for large file CDN handling (optional) */
+  r2?: R2Configuration
 }
 
 export interface QuartzConfig {
