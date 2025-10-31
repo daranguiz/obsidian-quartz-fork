@@ -32,7 +32,7 @@ Based on plan.md structure (Quartz TypeScript project):
 - [ ] T002 Create .env.example file documenting R2 environment variables (R2_ENDPOINT, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, CDN_DOMAIN_*, R2_BUCKET_*)
 - [ ] T003 [P] Create TypeScript type definitions for R2 configuration in quartz/cfg.ts
 - [ ] T004 [P] Create directory structure: quartz/util/ (if not exists), .quartz-cache/ (for CDN mappings)
-- [ ] T005 Follow quickstart.md to set up 4 R2 buckets in Cloudflare dashboard
+- [ ] T005 Follow quickstart.md to set up 4 R2 buckets in Cloudflare dashboard (vault-files-full, vault-files-trusted, vault-files-shachu, vault-files-public)
 - [ ] T006 Follow quickstart.md to configure custom domains (cdn-full.dario.ca, cdn-trusted.dario.ca, cdn-shachu.dario.ca, cdn-public.dario.ca)
 - [ ] T007 Follow quickstart.md to create Cloudflare Access policies for Full, Trusted, and Shachu tiers
 - [ ] T008 Follow quickstart.md to configure environment variables in all four Cloudflare Pages projects
@@ -89,7 +89,7 @@ Based on plan.md structure (Quartz TypeScript project):
 - [ ] T035 [US1] Export new plugins in quartz/plugins/index.ts
 - [ ] T036 [US1] Add LargeFileDetector transformer to plugin chain in quartz.config.ts (after PublishMode filter)
 - [ ] T037 [US1] Add CDNUploader emitter to plugin chain in quartz.config.ts
-- [ ] T038 [US1] Test with 25MB test file in content/test-public.md, build with --publish-mode public, verify file uploaded to large-files-public bucket
+- [ ] T038 [US1] Test with 25MB test file in content/test-public.md, build with --publish-mode public, verify file uploaded to vault-files-public bucket
 - [ ] T039 [US1] Test CDN URL accessibility: visit https://cdn-public.dario.ca/[path] in browser, verify file downloads
 - [ ] T040 [US1] Test with duplicate filenames in different folders (e.g., docs/paper.pdf and research/paper.pdf), verify no collisions
 
@@ -108,9 +108,9 @@ Based on plan.md structure (Quartz TypeScript project):
 ### Implementation for User Story 3
 
 - [ ] T041 [US3] Verify in largefile.ts that access level resolution correctly maps publish modes to AccessLevel enum (Public > Shachu > Trusted > Full hierarchy)
-- [ ] T042 [US3] Verify in cdnUploader.ts that files upload to correct bucket based on accessLevel (large-files-full, large-files-trusted, large-files-shachu, large-files-public)
-- [ ] T043 [US3] Test multi-reference scenario: Create file referenced by both public and trusted notes, verify uploaded to large-files-public (least restrictive)
-- [ ] T044 [US3] Test Full-tier file: Create file in note with no publish field, build for full mode, verify uploaded to large-files-full bucket
+- [ ] T042 [US3] Verify in cdnUploader.ts that files upload to correct bucket based on accessLevel (vault-files-full, vault-files-trusted, vault-files-shachu, vault-files-public)
+- [ ] T043 [US3] Test multi-reference scenario: Create file referenced by both public and trusted notes, verify uploaded to vault-files-public (least restrictive)
+- [ ] T044 [US3] Test Full-tier file: Create file in note with no publish field, build for full mode, verify uploaded to vault-files-full bucket
 - [ ] T045 [US3] Test Trusted-tier authentication: Build with trusted file, attempt direct CDN URL access as unauthenticated user, verify Cloudflare Access blocks and requires Google auth
 - [ ] T046 [US3] Test Trusted-tier authentication: Same file, authenticate as trusted user, verify download succeeds
 - [ ] T047 [US3] Test Public-tier accessibility: Build with public file, access CDN URL without authentication, verify download succeeds
@@ -250,7 +250,7 @@ Task: "Create emitter plugin skeleton in quartz/plugins/emitters/cdnUploader.ts"
 4. **STOP and VALIDATE**:
    - Create 25MB test file
    - Build with `npx quartz build --publish-mode public`
-   - Verify file uploaded to `large-files-public` bucket
+   - Verify file uploaded to `vault-files-public` bucket
    - Manually construct CDN URL and verify download works
    - Test with authenticated tier (trusted), verify Zero Trust blocks unauthenticated access
 5. **MVP DELIVERED**: Large files no longer cause 404 errors

@@ -28,7 +28,7 @@ interface LargeFile {
   hash: string                    // SHA-256 hex digest (64 chars)
 
   // CDN Mapping
-  targetBucket: string            // R2 bucket name (e.g., "large-files-trusted")
+  targetBucket: string            // R2 bucket name (e.g., "vault-files-trusted")
   cdnDomain: string               // Custom domain for this tier (e.g., "cdn-trusted.dario.ca")
   r2Key: string                   // Object key in R2 (e.g., "docs/research/a3f5b8c2-paper.pdf")
   cdnUrl: string                  // Full CDN URL (e.g., "https://cdn-trusted.dario.ca/docs/research/a3f5b8c2-paper.pdf")
@@ -166,10 +166,10 @@ Public > Shachu > Trusted > Full
 **Mapping to R2 Buckets**:
 ```typescript
 const BUCKET_FOR_ACCESS_LEVEL: Record<AccessLevel, string> = {
-  [AccessLevel.Full]: "large-files-full",
-  [AccessLevel.Trusted]: "large-files-trusted",
-  [AccessLevel.Shachu]: "large-files-shachu",
-  [AccessLevel.Public]: "large-files-public",
+  [AccessLevel.Full]: "vault-files-full",
+  [AccessLevel.Trusted]: "vault-files-trusted",
+  [AccessLevel.Shachu]: "vault-files-shachu",
+  [AccessLevel.Public]: "vault-files-public",
 }
 
 const DOMAIN_FOR_ACCESS_LEVEL: Record<AccessLevel, string> = {
@@ -195,7 +195,7 @@ When a file is referenced by multiple notes with different publish modes:
 - Note A (public) and Note B (trusted) both reference `paper.pdf`
 - Access levels: [Public, Trusted]
 - Resolution: Public (least restrictive)
-- Upload to: `large-files-public` bucket
+- Upload to: `vault-files-public` bucket
 - CDN URL: `https://cdn-public.dario.ca/...`
 
 ### 5. UploadStatus
@@ -357,7 +357,7 @@ Skipped (if hash found in CDNMapping cache)
   "sizeBytes": 25165824,
   "contentType": "application/pdf",
   "hash": "a3f5b8c2d1e4f7a9b6c3d0e1f2a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2",
-  "targetBucket": "large-files-trusted",
+  "targetBucket": "vault-files-trusted",
   "cdnDomain": "cdn-trusted.dario.ca",
   "r2Key": "docs/research/a3f5b8c2-paper.pdf",
   "cdnUrl": "https://cdn-trusted.dario.ca/docs/research/a3f5b8c2-paper.pdf",
@@ -389,7 +389,7 @@ Skipped (if hash found in CDNMapping cache)
 {
   "hash": "a3f5b8c2d1e4f7a9b6c3d0e1f2a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2",
   "localPath": "docs/research/paper.pdf",
-  "r2Bucket": "large-files-trusted",
+  "r2Bucket": "vault-files-trusted",
   "r2Key": "docs/research/a3f5b8c2-paper.pdf",
   "cdnUrl": "https://cdn-trusted.dario.ca/docs/research/a3f5b8c2-paper.pdf",
   "uploadTimestamp": "2025-10-29T14:30:00.000Z",

@@ -42,16 +42,16 @@ File Delivered
 
 ### Configuration Steps
 1. Create 4 R2 buckets (or use prefixes in single bucket):
-   - `large-files-full`
-   - `large-files-trusted`
-   - `large-files-shachu`
-   - `large-files-public`
+   - `vault-files-full`
+   - `vault-files-trusted`
+   - `vault-files-shachu`
+   - `vault-files-public`
 
 2. Connect custom domains to each bucket (R2 dashboard):
-   - Full: `cdn-full.dario.ca` → `large-files-full`
-   - Trusted: `cdn-trusted.dario.ca` → `large-files-trusted`
-   - Shachu: `cdn-shachu.dario.ca` → `large-files-shachu`
-   - Public: `cdn-public.dario.ca` → `large-files-public`
+   - Full: `cdn-full.dario.ca` → `vault-files-full`
+   - Trusted: `cdn-trusted.dario.ca` → `vault-files-trusted`
+   - Shachu: `cdn-shachu.dario.ca` → `vault-files-shachu`
+   - Public: `cdn-public.dario.ca` → `vault-files-public`
 
 3. Create Cloudflare Access applications for restricted tiers:
    - Application: "CDN Full Access" → `cdn-full.dario.ca`

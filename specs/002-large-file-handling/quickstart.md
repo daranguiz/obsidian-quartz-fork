@@ -34,14 +34,14 @@ Create each bucket with these names:
 
 | Bucket Name | Purpose | Access Level |
 |------------|---------|--------------|
-| `large-files-full` | Files from Full-tier notes | Most restrictive |
-| `large-files-trusted` | Files from Trusted-tier notes | Trusted users only |
-| `large-files-shachu` | Files from Shachu-tier notes | Shachu members only |
-| `large-files-public` | Files from Public-tier notes | No authentication |
+| `vault-files-full` | Files from Full-tier notes | Most restrictive |
+| `vault-files-trusted` | Files from Trusted-tier notes | Trusted users only |
+| `vault-files-shachu` | Files from Shachu-tier notes | Shachu members only |
+| `vault-files-public` | Files from Public-tier notes | No authentication |
 
 For each bucket:
 1. Click **Create bucket**
-2. Enter bucket name (e.g., `large-files-full`)
+2. Enter bucket name (e.g., `vault-files-full`)
 3. Leave location as default (automatic)
 4. Click **Create bucket**
 5. Repeat for all four buckets
@@ -81,7 +81,7 @@ Steps:
 
 For each bucket, connect its custom domain:
 
-1. Go to **R2** > Select bucket (e.g., `large-files-full`)
+1. Go to **R2** > Select bucket (e.g., `vault-files-full`)
 2. Click **Settings** tab
 3. Scroll to **Public Access** section
 4. Click **Connect Domain**
@@ -91,10 +91,10 @@ For each bucket, connect its custom domain:
 8. Repeat for all four buckets
 
 **Mapping**:
-- `large-files-full` → `cdn-full.dario.ca`
-- `large-files-trusted` → `cdn-trusted.dario.ca`
-- `large-files-shachu` → `cdn-shachu.dario.ca`
-- `large-files-public` → `cdn-public.dario.ca`
+- `vault-files-full` → `cdn-full.dario.ca`
+- `vault-files-trusted` → `cdn-trusted.dario.ca`
+- `vault-files-shachu` → `cdn-shachu.dario.ca`
+- `vault-files-public` → `cdn-public.dario.ca`
 
 **⚠️ Important**: Do NOT enable "Public Access" on any bucket yet. We'll configure Access policies first.
 
@@ -156,10 +156,10 @@ Public files should be accessible without authentication.
    - **Permissions**: `Admin Read & Write`
    - **TTL**: No expiration (or 1 year if you prefer rotation)
    - **Buckets**: Select all four buckets:
-     - `large-files-full`
-     - `large-files-trusted`
-     - `large-files-shachu`
-     - `large-files-public`
+     - `vault-files-full`
+     - `vault-files-trusted`
+     - `vault-files-shachu`
+     - `vault-files-public`
 4. Click **Create API Token**
 5. **SAVE THESE CREDENTIALS** (shown only once):
    - Access Key ID: `<ACCESS_KEY_ID>`
@@ -213,15 +213,15 @@ aws configure set aws_secret_access_key <R2_SECRET_ACCESS_KEY>
 
 # Test upload to public bucket
 echo "Test file content" > test.txt
-aws s3 cp test.txt s3://large-files-public/test.txt \
+aws s3 cp test.txt s3://vault-files-public/test.txt \
   --endpoint-url <R2_ENDPOINT>
 
 # Verify upload
-aws s3 ls s3://large-files-public/ \
+aws s3 ls s3://vault-files-public/ \
   --endpoint-url <R2_ENDPOINT>
 
 # Clean up
-aws s3 rm s3://large-files-public/test.txt \
+aws s3 rm s3://vault-files-public/test.txt \
   --endpoint-url <R2_ENDPOINT>
 rm test.txt
 ```
@@ -254,7 +254,7 @@ Upload a test file to restricted bucket and verify Access policy:
 
 ```bash
 # Upload test file to trusted bucket
-aws s3 cp test.pdf s3://large-files-trusted/test.pdf \
+aws s3 cp test.pdf s3://vault-files-trusted/test.pdf \
   --endpoint-url <R2_ENDPOINT>
 
 # Try accessing via CDN URL
@@ -283,10 +283,10 @@ CDN_DOMAIN_SHACHU=cdn-shachu.dario.ca
 CDN_DOMAIN_PUBLIC=cdn-public.dario.ca
 
 # R2 Bucket Names
-R2_BUCKET_FULL=large-files-full
-R2_BUCKET_TRUSTED=large-files-trusted
-R2_BUCKET_SHACHU=large-files-shachu
-R2_BUCKET_PUBLIC=large-files-public
+R2_BUCKET_FULL=vault-files-full
+R2_BUCKET_TRUSTED=vault-files-trusted
+R2_BUCKET_SHACHU=vault-files-shachu
+R2_BUCKET_PUBLIC=vault-files-public
 ```
 
 ## Troubleshooting
