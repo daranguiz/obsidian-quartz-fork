@@ -305,7 +305,7 @@ The vault repository has a GitHub Actions workflow that triggers Cloudflare rebu
 - `CF_PAGES_HOOK_URL` - Deploy hook for vault.dario.ca (Full tier)
 - `CF_PAGES_PRIVATE_HOOK_URL` - Deploy hook for notes-private.dario.ca (Trusted tier)
 - `CF_PAGES_SHACHU_HOOK_URL` - Deploy hook for shachu.dario.ca (Shachu tier)
-- `CF_PAGES_PUBLIC_HOOK_URL` - Deploy hook for notes.dario.ca (Public tier) *(see FUTURE_TASKS.md - currently not implemented)*
+- `CF_PAGES_PUBLIC_HOOK_URL` - Deploy hook for notes.dario.ca (Public tier)
 
 **Deploy Hooks**: Each Cloudflare Pages project provides a deploy hook URL found in:
 Cloudflare Dashboard → Pages → [Project] → Settings → Builds & deployments → Deploy Hooks
@@ -600,6 +600,89 @@ beforeBody: [
   - [quartz/components/renderPage.tsx:235-239](quartz/components/renderPage.tsx#L235-L239) - Adds `data-publish-mode` attribute to body
   - [quartz/styles/base.scss:93-116](quartz/styles/base.scss#L93-L116) - Conditional `.internal.broken` styling
   - [quartz/styles/custom.scss:5-27](quartz/styles/custom.scss#L5-L27) - Conditional `.dead-link` styling
+
+#### Large File CDN Handling (CUSTOM)
+
+**Location**:
+- `quartz/plugins/transformers/largefile.ts` (Transformer)
+- `quartz/plugins/emitters/cdnUploader.ts` (Emitter)
+- `quartz/util/cdn.ts` (Utilities)
+- `quartz/util/hash.ts` (Utilities)
+
+**Purpose**: Handle files over 20MB by uploading to Cloudflare R2 (CDN storage) and rewriting links to CDN URLs, bypassing Cloudflare Pages' 25MB file size limit.
+
+**How it works**:
+
+1. **Detection Phase** (Transformer Plugin):
+   - Scans markdown AST for file links (images, PDFs, etc.)
+   - Resolves relative paths to absolute paths
+   - Checks file sizes; marks files >20MB for CDN upload
+   - Groups references by file hash to prevent duplicate uploads
+   - Determines access level based on referencing notes' publish modes
+   - Generates R2 key (preserves directory structure + hash prefix)
+   - Constructs CDN URL: `https://cdn-{tier}.dario.ca/{path}/{hash}-{filename}`
+
+2. **Upload Phase** (Emitter Plugin):
+   - Loads CDN mapping cache from `.quartz-cache/cdn-mappings.json`
+   - Skips files already uploaded (hash match in cache)
+   - Uploads pending files to appropriate R2 bucket:
+     - `vault-files-full` → `cdn-full.dario.ca` (Full tier)
+     - `vault-files-trusted` → `cdn-trusted.dario.ca` (Trusted tier)
+     - `vault-files-shachu` → `cdn-shachu.dario.ca` (Shachu tier)
+     - `vault-files-public` → `cdn-public.dario.ca` (Public tier)
+   - Uses exponential backoff retry (1s, 2s, 4s) on upload failures
+   - Parallel uploads for >50 files (batches of 10 concurrent uploads)
+   - Updates CDN mapping cache with successful uploads
+
+3. **Orphan Cleanup**:
+   - Compares cache entries with current build's files
+   - Deletes files from R2 that are no longer referenced
+   - Updates cache to remove orphaned entries
+
+4. **Access Control Integration**:
+   - Each CDN domain is protected by Cloudflare Zero Trust Access policies
+   - Access levels map to tier hierarchy:
+     - **Public**: No authentication required
+     - **Shachu**: Requires shachu member authentication
+     - **Trusted**: Requires trusted user authentication
+     - **Full**: Requires vault owner authentication
+   - Multi-reference files uploaded to least restrictive tier (e.g., file in both public and trusted notes → uploaded to public bucket)
+   - Direct URL access blocked by Zero Trust for restricted tiers
+
+**Key Features**:
+- **Deduplication**: Files with identical SHA-256 hashes skip re-upload
+- **Idempotent**: Concurrent builds safe (hash-based keys prevent conflicts)
+- **Performance**: <30% build time increase; parallel uploads beyond 50 files
+- **Security**: Zero Trust enforces tier-appropriate authentication on all CDN requests
+- **Automatic cleanup**: Orphaned files immediately removed from CDN
+- **File growth detection**: 15MB file later growing to 25MB automatically migrated to CDN
+
+**Data Structures**:
+- `LargeFile`: Tracks file metadata, target bucket, CDN URL, access level, referencing notes
+- `CDNMapping`: Persisted cache entry (hash, R2 location, references, upload timestamp)
+- `FileReference`: Link from note to file (source, target, publish mode)
+- `AccessLevel` enum: `Full | Trusted | Shachu | Public`
+- `UploadStatus` enum: `Pending | Uploading | Completed | Failed | Skipped`
+
+**Environment Variables** (set in Cloudflare Pages):
+```bash
+R2_ENDPOINT=https://<account-id>.r2.cloudflarestorage.com
+R2_ACCESS_KEY_ID=<api-token-id>
+R2_SECRET_ACCESS_KEY=<api-token-secret>
+CDN_DOMAIN_FULL=cdn-full.dario.ca
+CDN_DOMAIN_TRUSTED=cdn-trusted.dario.ca
+CDN_DOMAIN_SHACHU=cdn-shachu.dario.ca
+CDN_DOMAIN_PUBLIC=cdn-public.dario.ca
+R2_BUCKET_FULL=vault-files-full
+R2_BUCKET_TRUSTED=vault-files-trusted
+R2_BUCKET_SHACHU=vault-files-shachu
+R2_BUCKET_PUBLIC=vault-files-public
+```
+
+**Infrastructure Setup**:
+- See [specs/002-large-file-handling/quickstart.md](../specs/002-large-file-handling/quickstart.md) for detailed R2 bucket setup, custom domain configuration, and Zero Trust policy creation
+
+**Status**: Feature 002 - Completely custom to this fork (implemented 2025-10-31)
 
 ### Plugin Execution Order
 
