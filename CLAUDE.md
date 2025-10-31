@@ -369,3 +369,10 @@ rm -rf content && cp -r ~/Documents/Dario\ Vault content && npx quartz build
 
 *Last updated: 2025-10-26*
 *By: Claude (Sonnet 4.5)*
+
+## Active Technologies
+- TypeScript (Node.js) - Quartz build system is TypeScript-based + Quartz framework, Cloudflare R2 SDK (@cloudflare/workers-types), Node.js fs/crypto for file operations (002-large-file-handling)
+- Cloudflare R2 (S3-compatible object storage) for large files (002-large-file-handling)
+
+## Recent Changes
+- 002-large-file-handling: Added TypeScript (Node.js) - Quartz build system is TypeScript-based + Quartz framework, Cloudflare R2 SDK (@cloudflare/workers-types), Node.js fs/crypto for file operations
