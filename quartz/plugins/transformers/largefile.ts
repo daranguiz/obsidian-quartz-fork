@@ -3,7 +3,7 @@ import { Root } from "mdast"
 import { visit } from "unist-util-visit"
 import { VFile } from "vfile"
 import { stat } from "fs/promises"
-import { resolve, join, dirname } from "path"
+import { resolve, join, dirname, basename } from "path"
 import {
   LargeFile,
   FileReference,
@@ -15,8 +15,65 @@ import {
   DOMAIN_FOR_ACCESS_LEVEL,
 } from "../../util/cdn"
 import { computeFileHash } from "../../util/hash"
+import { glob } from "../../util/glob"
+import { joinSegments } from "../../util/path"
 
 const SIZE_THRESHOLD = 20 * 1024 * 1024 // 20MB in bytes
+
+/**
+ * Cache for file lookups using "shortest path" resolution.
+ * Maps filename to array of full paths (there may be multiple files with same name).
+ */
+let fileCache: Map<string, string[]> | null = null
+
+/**
+ * Resolves a file path using "shortest path" matching (similar to Obsidian/Quartz link resolution).
+ * First tries relative path resolution, then falls back to filename-only matching.
+ */
+async function resolveFilePath(
+  targetPath: string,
+  noteDir: string,
+  contentRoot: string,
+): Promise<string | null> {
+  // Try 1: Direct relative path resolution
+  const directPath = resolve(noteDir, targetPath)
+  try {
+    const stats = await stat(directPath)
+    if (stats.isFile()) {
+      return directPath
+    }
+  } catch {
+    // File doesn't exist at direct path, continue to shortest path matching
+  }
+
+  // Try 2: Shortest path resolution - find file by name anywhere in content
+  const filename = basename(targetPath)
+
+  // Build cache on first use
+  if (!fileCache) {
+    fileCache = new Map()
+    const allFiles = await glob("**", contentRoot, ["**/*.md"])
+
+    for (const fp of allFiles) {
+      const fullPath = joinSegments(contentRoot, fp)
+      const name = basename(fullPath)
+      if (!fileCache.has(name)) {
+        fileCache.set(name, [])
+      }
+      fileCache.get(name)!.push(fullPath)
+    }
+  }
+
+  // Look up file by name
+  const candidates = fileCache.get(filename)
+  if (candidates && candidates.length > 0) {
+    // If multiple files with same name, prefer the one closest to the note
+    // For now, just return the first match
+    return candidates[0]
+  }
+
+  return null
+}
 
 /**
  * Transformer plugin that detects large files (>20MB) referenced in markdown,
@@ -30,7 +87,7 @@ export const LargeFileDetector: QuartzTransformerPlugin = () => {
         () => {
           return async (tree: Root, file: VFile) => {
             const fileReferences: FileReference[] = []
-            const contentRoot = process.cwd()
+            const contentRoot = join(process.cwd(), "content")
             const sourceNotePath = file.path || ""
             const sourceNoteSlug = (file.data as any).slug || ""
             const publishMode = (file.data as any).frontmatter?.publish
@@ -75,10 +132,15 @@ export const LargeFileDetector: QuartzTransformerPlugin = () => {
             // Resolve paths and check file sizes
             for (const ref of fileReferences) {
               try {
-                // Resolve relative to source note location
+                // Resolve using shortest path matching (like Obsidian/Quartz)
                 const notePath = resolve(contentRoot, sourceNotePath)
                 const noteDir = dirname(notePath)
-                const resolvedPath = resolve(noteDir, ref.targetPath)
+                const resolvedPath = await resolveFilePath(ref.targetPath, noteDir, contentRoot)
+
+                if (!resolvedPath) {
+                  // File not found, skip
+                  continue
+                }
 
                 ref.resolvedPath = resolvedPath
 
@@ -108,10 +170,8 @@ export const LargeFileDetector: QuartzTransformerPlugin = () => {
                   const stats = await stat(ref.resolvedPath)
                   const hash = await computeFileHash(ref.resolvedPath)
                   const filename = ref.resolvedPath.split("/").pop() || "unknown"
-                  const relativePath = ref.resolvedPath.replace(
-                    join(contentRoot, "content") + "/",
-                    "",
-                  )
+                  // Calculate path relative to content directory
+                  const relativePath = ref.resolvedPath.replace(contentRoot + "/", "")
 
                   // Determine access level from initial reference
                   const accessLevel = resolveAccessLevel([ref.publishMode])
@@ -165,8 +225,48 @@ export const LargeFileDetector: QuartzTransformerPlugin = () => {
               ;(file.data as any).largeFiles = Array.from(largeFileMap.values())
             }
 
-            // Rewrite links in the AST (will be done in a second pass after upload)
-            // For now, we just mark them for rewriting
+            // Rewrite links in the AST to point to CDN URLs
+            // Build a map of resolved paths to CDN URLs for quick lookup
+            const pathToCdnUrl = new Map<string, string>()
+            for (const lf of largeFileMap.values()) {
+              pathToCdnUrl.set(lf.localPath, lf.cdnUrl)
+            }
+
+            // Second pass: rewrite links that point to large files
+            visit(tree, (node: any) => {
+              // Handle markdown links: ![alt](path) or [text](path)
+              if (node.type === "link" || node.type === "image") {
+                const url = node.url as string
+                if (url && !url.startsWith("http://") && !url.startsWith("https://")) {
+                  // Find the file reference for this link
+                  const ref = fileReferences.find(r => r.targetPath === url)
+                  if (ref && ref.resolvedPath && pathToCdnUrl.has(ref.resolvedPath)) {
+                    const cdnUrl = pathToCdnUrl.get(ref.resolvedPath)!
+                    node.url = cdnUrl
+                  }
+                }
+              }
+
+              // Handle wikilinks: ![[file]] or [[file]]
+              if (node.type === "wikiLink") {
+                const target = node.data?.slug || node.value
+                if (target) {
+                  const ref = fileReferences.find(r => r.targetPath === target)
+                  if (ref && ref.resolvedPath && pathToCdnUrl.has(ref.resolvedPath)) {
+                    const cdnUrl = pathToCdnUrl.get(ref.resolvedPath)!
+                    // For wikilinks, we need to convert them to regular links
+                    // This is a bit tricky - we'll update the node type and url
+                    node.type = "link"
+                    node.url = cdnUrl
+                    if (!node.children || node.children.length === 0) {
+                      // Add link text if not present
+                      node.children = [{ type: "text", value: ref.targetPath }]
+                    }
+                  }
+                }
+              }
+            })
+
             ;(file.data as any).fileReferences = fileReferences
           }
         },

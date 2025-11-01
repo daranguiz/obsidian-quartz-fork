@@ -357,5 +357,10 @@ export async function loadCDNMappingCache(): Promise<CDNMappingCache> {
 export async function saveCDNMappingCache(cache: CDNMappingCache): Promise<void> {
   cache.lastUpdated = new Date().toISOString()
   const data = JSON.stringify(cache, null, 2)
+  // Ensure cache directory exists
+  const { dirname } = await import("path")
+  const { mkdir } = await import("fs/promises")
+  const cacheDir = dirname(CDN_CACHE_PATH)
+  await mkdir(cacheDir, { recursive: true })
   await writeFile(CDN_CACHE_PATH, data, "utf-8")
 }
