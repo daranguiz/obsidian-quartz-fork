@@ -303,21 +303,30 @@ export function resolveAccessLevel(publishModes: (string | undefined)[]): Access
       continue
     }
 
-    // Extract mode from wikilink format: "[[Public]]" -> "Public"
-    const match = mode.match(/\[\[(\w+)\]\]/)
+    // Extract mode from wikilink format: "[[Level 2 - Shachu]]" -> "Level 2 - Shachu"
+    // Match everything between [[ and ]], including spaces and hyphens
+    const match = mode.match(/\[\[(.+?)\]\]/)
     const extracted = match ? match[1].toLowerCase() : mode.toLowerCase()
 
     switch (extracted) {
       case "public":
+      case "level 3 - public":
         levels.push(AccessLevel.Public)
         break
       case "shachu":
+      case "level 2 - shachu":
         levels.push(AccessLevel.Shachu)
         break
       case "trusted":
+      case "level 1 - trusted":
         levels.push(AccessLevel.Trusted)
         break
+      case "full":
+      case "level 0 - full":
+        levels.push(AccessLevel.Full)
+        break
       default:
+        // If not recognized, default to Full (most restrictive)
         levels.push(AccessLevel.Full)
     }
   }
