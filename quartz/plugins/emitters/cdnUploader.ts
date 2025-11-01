@@ -66,20 +66,38 @@ export const CDNUploader: QuartzEmitterPlugin = () => {
           console.log(`📦 Detected ${allLargeFiles.length} large files`)
         }
 
-        // Load CDN mapping cache
-        const cache = await loadCDNMappingCache()
-        const cacheMap = new Map<string, CDNMapping>(cache.mappings.map((m) => [m.hash, m]))
+        // Query R2 buckets to check which files are already uploaded
+        // This works even when local cache doesn't persist (e.g., Cloudflare Pages)
+        const uploadedFilesMap = new Map<string, boolean>()
 
-        // Check which files are already uploaded (skip if hash matches)
+        // Get unique buckets we need to check
+        const bucketsToCheck = new Set(allLargeFiles.map(lf => lf.targetBucket))
+
+        for (const bucket of bucketsToCheck) {
+          try {
+            const existingKeys = await r2Client.listFiles(bucket)
+            for (const key of existingKeys) {
+              uploadedFilesMap.set(`${bucket}:${key}`, true)
+            }
+          } catch (error) {
+            console.warn(`[CDNUploader] Failed to list files in ${bucket}, will upload all`)
+          }
+        }
+
+        // Check which files are already uploaded (skip if exists in R2)
         for (const lf of allLargeFiles) {
-          const cached = cacheMap.get(lf.hash)
-          if (cached) {
+          const bucketKey = `${lf.targetBucket}:${lf.r2Key}`
+          if (uploadedFilesMap.has(bucketKey)) {
             lf.uploadStatus = UploadStatus.Skipped
             if (verbose) {
               console.log(`  ⏭️  Skipped: ${lf.filename} (already uploaded)`)
             }
           }
         }
+
+        // Also load local cache for mapping hash->URL (even if it doesn't persist)
+        const cache = await loadCDNMappingCache()
+        const cacheMap = new Map<string, CDNMapping>(cache.mappings.map((m) => [m.hash, m]))
 
         // Upload pending files
         const pendingFiles = allLargeFiles.filter((lf) => lf.uploadStatus === UploadStatus.Pending)
