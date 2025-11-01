@@ -2,7 +2,8 @@
 
 **Feature Branch**: `002-large-file-handling`
 **Created**: 2025-10-29
-**Status**: Draft
+**Status**: Implemented
+**Deployed**: 2025-10-31
 **Input**: User description: "Let's work on the Large File Handling problem"
 
 ## Clarifications
@@ -185,3 +186,152 @@ When building for different publish modes (full, trusted, shachu, public), large
 - **SC-019**: Changes to Cloudflare Zero Trust policies take effect immediately for CDN file access (new users allowed, old users denied per policy)
 - **SC-020**: Access controls are updated on every build - if a note's publish mode changes, the large file's access level reflects the change on next build
 - **SC-021**: All CDN requests route through Cloudflare Zero Trust for authentication/authorization, regardless of how the URL was obtained
+
+---
+
+## Implementation Learnings
+
+### Session 2025-10-31: Initial Deployment & Bug Fixes
+
+#### Issue 1: Path Resolution Bug
+**Problem**: Large files were not being detected during initial deployment. Build logs showed "0 large files detected" despite 12 PDFs over 20MB existing in the vault.
+
+**Root Cause**: The `contentRoot` variable in `largefile.ts:109` was set to `process.cwd()` (project root) instead of the `content/` directory where vault files are cloned during build.
+
+**Fix**: Changed `contentRoot` from `process.cwd()` to `join(process.cwd(), "content")`. This allowed the glob pattern to correctly find PDF files in the vault structure.
+
+**Result**: After fix, build correctly detected 12 large PDFs totaling 687MB.
+
+**Code Location**: [quartz/plugins/transformers/largefile.ts:109](../../quartz/plugins/transformers/largefile.ts#L109)
+
+---
+
+#### Issue 2: Access Level Resolution for Multi-Word Publish Modes
+**Problem**: Files referenced by Shachu-level notes were being uploaded to `cdn-full.dario.ca` instead of `cdn-shachu.dario.ca`. This violated the access level hierarchy where files should use the least restrictive level among referencing notes.
+
+**Root Cause**: The `resolveAccessLevel()` function in `cdn.ts:307` used regex `/\[\[(\w+)\]\]/` which only captures single words. When encountering publish modes like `[[Level 2 - Shachu]]`, it would:
+1. Match only "Level" (first word before space)
+2. Not match any case in switch statement
+3. Fall through to `default` case
+4. Return `AccessLevel.Full` (most restrictive)
+
+**Actual Publish Mode Values in Vault**:
+- `[[Level 3 - Public]]`
+- `[[Level 2 - Shachu]]`
+- `[[Level 1 - Trusted]]`
+- `[[Level 0 - Full]]`
+
+**Fix**:
+1. Updated regex from `/\[\[(\w+)\]\]/` to `/\[\[(.+?)\]\]/` to capture full content including spaces and hyphens
+2. Added support for both short form (`[[Shachu]]`) and full form (`[[Level 2 - Shachu]]`) in switch statement
+3. Added explicit case for "full" and "level 0 - full"
+
+**Verification**: Local build test confirmed CQ-01.pdf now correctly generates:
+```
+https://cdn-shachu.dario.ca/Tea%20Resources/Bibliography/Chanoyu%20Quarterly/PDFs/8c5e5a47-CQ-01.pdf
+```
+
+**Code Location**: [quartz/util/cdn.ts:306-331](../../quartz/util/cdn.ts#L306-L331)
+
+---
+
+#### Issue 3: Cloudflare Zero Trust Configuration
+**Problem**: After deployment, CDN URLs were publicly accessible without authentication, even for restricted tiers (Shachu, Trusted, Full).
+
+**Root Cause**: This was **not a code issue**. The code correctly uploaded files to tier-specific R2 buckets (`vault-files-shachu`, `vault-files-trusted`, etc.), but the R2 buckets were serving files publicly via custom domains without Cloudflare Zero Trust protection.
+
+**Solution**: Infrastructure configuration in Cloudflare dashboard (manual setup):
+1. Configure R2 custom domain routing through Cloudflare Zero Trust Access
+2. Create Access policies for each CDN domain:
+   - `cdn-full.dario.ca` - Most restrictive authentication
+   - `cdn-trusted.dario.ca` - Google authentication required
+   - `cdn-shachu.dario.ca` - Shachu member authentication required
+   - `cdn-public.dario.ca` - No authentication (public access)
+
+**Verification**: After configuration, unauthenticated access to `https://cdn-shachu.dario.ca/.../CQ-01.pdf` returns:
+- HTTP 302 redirect to `daranguiz.cloudflareaccess.com/cdn-cgi/access/login/...`
+- JWT payload shows `"auth_status":"NONE"`
+- File is protected and requires authentication ✅
+
+**Key Insight**: The CDN file upload code (detecting files, determining access levels, uploading to correct buckets) is completely separate from the Zero Trust access control configuration. The code handles the "what" and "where", while Cloudflare Zero Trust handles the "who can access". Both layers must be configured for the feature to work correctly.
+
+**Related Requirements**: FR-020 through FR-031, SC-012 through SC-021
+
+---
+
+### Architecture Insights
+
+#### Automatic Assets Emitter Exclusion
+The large file handling integrates seamlessly with the existing asset pipeline without manual intervention:
+
+1. **LargeFileDetector** (transformer phase) rewrites links to external CDN URLs (e.g., `https://cdn-shachu.dario.ca/...`)
+2. **AttachmentWhitelist** (filter phase) runs `extractAttachments()` which calls `isValidAttachmentReference()`
+3. `isValidAttachmentReference()` ([quartz/util/attachments.ts:23](../../quartz/util/attachments.ts#L23)) filters out absolute URLs: `if (isAbsoluteUrl(src)) return false`
+4. Large files with CDN URLs are automatically excluded from whitelist
+5. **Assets** emitter sees large PDFs are not in whitelist and correctly skips them as "orphaned"
+
+This prevents large files from being copied to `public/` directory, which would:
+- Cause builds to fail (Cloudflare Pages 25MB file size limit)
+- Waste storage by duplicating files already in R2
+- Defeat the purpose of CDN handling
+
+**No manual exclusion needed** - the architecture naturally handles it through the plugin chain order and absolute URL filtering.
+
+---
+
+### Cache Persistence Strategy
+
+**Challenge**: Cloudflare Pages builds are ephemeral - no local cache persists between builds.
+
+**Solution**: The CDNUploader emitter queries R2 directly using `listFiles()` to check which files are already uploaded, rather than relying on local cache files.
+
+**Implementation** ([quartz/plugins/emitters/cdnUploader.ts:69-100](../../quartz/plugins/emitters/cdnUploader.ts#L69-L100)):
+```typescript
+// Query R2 buckets to check which files are already uploaded
+const uploadedFilesMap = new Map<string, boolean>()
+const bucketsToCheck = new Set(allLargeFiles.map(lf => lf.targetBucket))
+
+for (const bucket of bucketsToCheck) {
+  const existingKeys = await r2Client.listFiles(bucket)
+  for (const key of existingKeys) {
+    uploadedFilesMap.set(`${bucket}:${key}`, true)
+  }
+}
+
+// Skip files already in R2
+for (const lf of allLargeFiles) {
+  const bucketKey = `${lf.targetBucket}:${lf.r2Key}`
+  if (uploadedFilesMap.has(bucketKey)) {
+    lf.uploadStatus = UploadStatus.Skipped
+  }
+}
+```
+
+**Benefits**:
+- Works in ephemeral build environments (Cloudflare Pages, GitHub Actions)
+- R2 becomes the source of truth for what's already uploaded
+- Prevents re-uploading 687MB of PDFs on every build
+- Local cache file (`.quartz-cache/cdn-mappings.json`) still used for local development convenience
+
+---
+
+### Build Order Independence
+
+**Question**: Does build order matter when building multiple tiers (public → trusted → shachu → full)?
+
+**Answer**: No, build order does not matter. Each build is independent and self-contained.
+
+**How It Works**:
+1. Each tier build determines file access levels based on **which notes reference the file in that specific build**
+2. If a file is referenced by Shachu notes, it uploads to `vault-files-shachu`
+3. If the same file is referenced by Trusted notes in a different build, it uploads to `vault-files-trusted`
+4. Files can exist in multiple buckets simultaneously
+5. Each tier's published notes link to the appropriate bucket for their access level
+
+**Example Scenario**: Building Full tier first
+- Full build detects PDF referenced by Shachu note
+- Determines access level based on Shachu publish mode
+- Uploads to `vault-files-shachu` bucket (not `vault-files-full`)
+- Generates CDN URL pointing to `cdn-shachu.dario.ca`
+
+**Key Insight**: Access level is determined by the **referencing notes' publish modes**, not by which tier is currently being built. This means the "full" build can upload files to any bucket (public, shachu, trusted, or full) depending on what the notes specify.
