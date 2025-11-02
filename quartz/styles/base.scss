@@ -71,12 +71,12 @@ article {
 
 strong {
   font-weight: $semiBoldWeight;
-  color: #c9844c; // Warm tan-orange (former dead link color)
+  color: #a86d38; // Darker warm orange for light mode (slightly darker than #c9844c)
 }
 
-// Use same color in dark mode
+// Use lighter color in dark mode
 :root[saved-theme="dark"] strong {
-  color: #c9844c; // Same warm tan-orange in dark mode
+  color: #c9844c; // Lighter warm tan-orange in dark mode
 }
 
 a {
@@ -147,6 +147,11 @@ a {
   }
 }
 
+// Use lighter link weight in dark mode
+:root[saved-theme="dark"] a {
+  font-weight: 500;
+}
+
 .flex-component {
   display: flex;
 }
@@ -203,7 +208,7 @@ a {
 
     p > strong,
     li > strong {
-      color: var(--dark);
+      color: #a86d38; // Darker warm orange for light mode
     }
   }
 
@@ -325,6 +330,14 @@ a {
     & footer {
       margin-left: 0;
     }
+  }
+}
+
+// Override strong color in dark mode for article content
+:root[saved-theme="dark"] .page article {
+  p > strong,
+  li > strong {
+    color: #c9844c; // Lighter warm tan-orange in dark mode
   }
 }
 

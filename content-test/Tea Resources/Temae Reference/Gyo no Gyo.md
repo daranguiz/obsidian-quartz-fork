@@ -1,3 +1,6 @@
+---
+publish: "[[Level 2 - Trusted]]"
+---
 
 > [!DANGER] UNDER CONSTRUCTION  
 > This is not done yet! I just copy-pasted the furo version. Going through and updating for ro now.

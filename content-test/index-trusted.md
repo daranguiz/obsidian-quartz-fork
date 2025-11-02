@@ -1,9 +1,9 @@
 ---
-title: Test Vault Home
-publish: "[[Level 0 - Full]]"
+title: Test Vault Home (Trusted)
+publish: "[[Level 2 - Trusted]]"
 ---
 
-# Test Content Vault
+# Test Content Vault - Trusted View
 
 This is a test content set for **rapid development iteration** of Quartz features.
 
@@ -18,6 +18,7 @@ This is a test content set for **rapid development iteration** of Quartz feature
 - [[Projects/Project Alpha]] - Public project #project #active
 - [[Projects/Project Beta]] - Trusted project
 - [[Reference/Style Guide]] - Internal reference
+- [[Reference/Trusted Info]] - Trusted-only reference
 - [[Dead Link Example]] - This link is intentionally broken
 - [[Daily/2024-01-15]] - Daily note
 - [[Gyo no Gyo]] - Test big file
@@ -39,12 +40,12 @@ This is a test content set for **rapid development iteration** of Quartz feature
 - Tag links: #css-testing #link-styling
 
 ### Publish Tiers
-- This page: Public (visible on all tiers)
-- Some pages: Trusted only
-- Some pages: Shachu only
-- Some pages: Unpublished (full tier only)
-- Orphaned files: Files with no incoming links
+- This page: **Trusted tier index** (visible on trusted and shachu tiers)
+- Public pages: Visible everywhere
+- Trusted pages: Visible on trusted tier and above
+- Shachu pages: Visible on shachu tier only
+- Unpublished: Full tier only
 
 ---
 
-*Last updated: 2025-11-02*
+*Last updated: 2025-11-02 - Trusted Tier*

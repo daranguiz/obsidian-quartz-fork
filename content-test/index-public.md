@@ -1,6 +1,6 @@
 ---
 title: Test Vault Home
-publish: "[[Level 0 - Full]]"
+publish: "[[Level 3 - Public]]"
 ---
 
 # Test Content Vault
