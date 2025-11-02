@@ -65,6 +65,7 @@ obsidian-quartz-fork/
 │   ├── styles/                      # CSS styling
 │   └── util/                        # Utility functions
 ├── content/                         # USUALLY EMPTY (gets cloned during build)
+├── content-test/                    # TEST CONTENT SET (for rapid development)
 ├── docs/                            # Upstream Quartz documentation
 ├── docs-custom/                     # OUR CUSTOM DOCUMENTATION (this folder)
 │   ├── ARCHITECTURE.md              # Complete system documentation
@@ -166,15 +167,51 @@ Components are in `quartz/components/`.
 
 ### Testing Changes
 
+#### Quick Testing with Test Content Set (RECOMMENDED)
+
+For **rapid development iteration** (< 10 seconds vs 2+ minutes), use the test content set:
+
 ```bash
+# Copy test content to content folder
+cp -r content-test content
+
+# Build and serve with test content (< 10 seconds!)
+npx quartz build --publish-mode full --serve
+
+# Test different tiers
+npx quartz build --publish-mode public
+npx quartz build --publish-mode trusted
+npx quartz build --publish-mode shachu
+```
+
+**Test Content Features**:
+- ~15-20 files (vs 819 in full vault)
+- All publish tiers (Public, Trusted, Shachu, Unpublished)
+- Dead links, inline tags, cross-folder links
+- Multiple note types (Shihen, Temae, Teaching, Okeiko, Daily)
+- Edge cases (wrapping links, links in headings, orphaned files)
+- See `content-test/README.md` for full details
+
+**When to use**:
+- ✓ In-the-loop testing during active development
+- ✓ Rapid CSS/styling iteration
+- ✓ Feature validation before full vault testing
+- ✗ Final production validation (always test with full vault)
+
+#### Full Vault Testing
+
+For **final validation** before deployment:
+
+```bash
+# Clone actual vault content (takes 2+ minutes)
+# ... (production build process)
+
 # Test locally with a specific publish mode
 npx quartz build --publish-mode trusted --baseUrl notes-private.dario.ca
 
 # Test specific mode and serve
 npx quartz build --publish-mode public --serve
 ```
-
-**Pro tip**: Create test content files in `content/` directory with various publish modes to test filtering logic.
 
 ---
 
@@ -392,6 +429,8 @@ rm -rf content && cp -r ~/Documents/Dario\ Vault content && npx quartz build
 - N/A (stateless - processes markdown files during build, no persistent storage) (004-redaction-markers)
 - TypeScript (targeting ES2020, Node.js runtime for build, browser runtime for components) + Quartz v4 framework, React 18 (for components), remark/unified (markdown processing), preact (runtime) (005-inline-tag-display)
 - N/A (stateless build-time transformation) (005-inline-tag-display)
+- SCSS (Sass), compiled via Quartz build system (TypeScript/Node.js) + Quartz v4 framework, Sass compiler (inherited from Quartz) (006-link-styling)
+- N/A (styling only, no data persistence) (006-link-styling)
 
 ## Recent Changes
 - 002-large-file-handling: Added TypeScript (Node.js) - Quartz build system is TypeScript-based + Quartz framework, Cloudflare R2 SDK (@cloudflare/workers-types), Node.js fs/crypto for file operations

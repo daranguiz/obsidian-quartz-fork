@@ -85,16 +85,36 @@ a {
 
   &.internal {
     text-decoration: none;
+    // Internal link background styling options - uncomment one to test
+
+    // OPTION B - CURRENT (Grey background - baseline) ✓ ACTIVE
+    // Use case: Established pattern, high visual distinction
     background-color: var(--highlight);
     padding: 0 0.1rem;
     border-radius: 5px;
+
+    // OPTION A - MINIMAL (No background - text only)
+    // Use case: Clean, text-focused aesthetic
+    // Uncomment to test:
+    // background-color: transparent;
+    // padding: 0;
+    // border-radius: 0;
+
+    // OPTION C - MODERN (Bottom border emphasis)
+    // Use case: Modern link treatment, less visually heavy than full background
+    // Uncomment to test:
+    // background-color: transparent;
+    // border-bottom: 2px solid var(--secondary);
+    // padding: 0 0 0.1rem 0;
+    // border-radius: 0;
+
     line-height: 1.4rem;
 
     // Only show broken link styling on full tier
     body[data-publish-mode="full"] & {
       &.broken {
-        color: var(--secondary);
-        opacity: 0.5;
+        color: #c9844c;
+        opacity: 1.0;
         transition: opacity 0.2s ease;
         &:hover {
           opacity: 0.8;
