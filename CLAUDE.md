@@ -108,6 +108,8 @@ Remember: There are TWO repositories involved:
 |---------|----------------|------|
 | Multi-tier publishing | `quartz/plugins/filters/publishMode.ts` | Plugin (custom) |
 | Index swapping | `quartz/plugins/filters/indexSwapper.ts` | Plugin (custom) |
+| Redaction markers | `quartz/plugins/transformers/redactionMarkers.ts` | Transformer (custom) |
+| Redaction markers plugin | Vault: `.obsidian/plugins/redaction-markers/` | Obsidian plugin (custom) |
 | Frontmatter display | `quartz/components/FrontmatterProperties.tsx` | Component (custom) |
 | Orange broken links | CSS files in `quartz/styles/` | Styling (custom) |
 | Explorer filtering | `quartz.layout.ts` (filterFn) | Configuration (custom) |
@@ -324,6 +326,9 @@ When working on future tasks:
 |---------------|----------|
 | Publish mode logic | `quartz/plugins/filters/publishMode.ts` |
 | Index swapping | `quartz/plugins/filters/indexSwapper.ts` |
+| Redaction markers transformer | `quartz/plugins/transformers/redactionMarkers.ts` |
+| Redaction markers plugin (Obsidian) | Vault: `.obsidian/plugins/redaction-markers/` |
+| Redaction markers plugin dev | Vault: `.obsidian/plugins/redaction-markers-dev/` |
 | Frontmatter display | `quartz/components/FrontmatterProperties.tsx` |
 | Sidebar file tree | `quartz/components/Explorer.tsx` |
 | Main config | `quartz.config.ts` |
@@ -373,6 +378,12 @@ rm -rf content && cp -r ~/Documents/Dario\ Vault content && npx quartz build
 ## Active Technologies
 - TypeScript (Node.js) - Quartz build system is TypeScript-based + Quartz framework, Cloudflare R2 SDK (@cloudflare/workers-types), Node.js fs/crypto for file operations (002-large-file-handling)
 - Cloudflare R2 (S3-compatible object storage) for large files (002-large-file-handling)
+- TypeScript (Node.js runtime, version inherited from Quartz) + Quartz v4 framework, existing Explorer component, FileTrieNode utilities (003-nav-flatten)
+- N/A (build-time transformation only, no persistent storage) (003-nav-flatten)
+- TypeScript (Node.js runtime), client-side JavaScript in inline scrip + Quartz v4 framework, Explorer component with existing folder state managemen (003-nav-flatten)
+- localStorage (Explorer's existing saved state mechanism - already implemented) (003-nav-flatten)
+- TypeScript (targeting Obsidian plugin API + Quartz v4 Node.js runtime) (004-redaction-markers)
+- N/A (stateless - processes markdown files during build, no persistent storage) (004-redaction-markers)
 
 ## Recent Changes
 - 002-large-file-handling: Added TypeScript (Node.js) - Quartz build system is TypeScript-based + Quartz framework, Cloudflare R2 SDK (@cloudflare/workers-types), Node.js fs/crypto for file operations

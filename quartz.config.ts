@@ -56,7 +56,7 @@ const config: QuartzConfig = {
   plugins: {
     transformers: [
       Plugin.FrontMatter(),
-      Plugin.HideInBuild(), // Remove content marked with hide-in-build comments based on publish mode
+      Plugin.RedactionMarkers(), // Content redaction markers (inline/block) with Juuden keyword tripwire
       Plugin.CreatedModifiedDate({
         priority: ["frontmatter", "git", "filesystem"],
       }),
@@ -100,6 +100,7 @@ const config: QuartzConfig = {
       // Comment out CustomOgImages to speed up build time
       Plugin.CustomOgImages(),
       Plugin.CDNUploader(), // Upload large files to R2 CDN
+      Plugin.BuildWarningsReport(), // Generate warnings report for malformed markers
     ],
   },
 }

@@ -12,6 +12,54 @@ This document tracks planned enhancements and known issues that need to be addre
 
 These are tasks explicitly requested by Dario and take priority over AI-generated suggestions.
 
+### Tags show up weirdly
+
+https://trusted.dario.ca/Tea-Resources/紙片-(Shihen)/Number-of-sweets-for-higher-temae
+
+Not only are they rendered incorrectly, but the tag also shows up at the top of the page (which I don't want).
+
+### Fix build times 
+
+4x builds, 4x clones, that's all bad. 
+
+### Dead link styling
+
+The current styling is a little loud. What if I keep the orange, but remove the background grey highlight? Maybe change the orange to be a little darker, more of a burnt orange?
+
+### MOC-Based Navigation View
+
+**Goal**: Add an alternative navigation view in the Explorer sidebar that shows all MOC (Map of Content) files instead of the folder tree.
+
+**Context**: The vault is organized around MOCs - main "topic" files that everything links to. A navigation view that surfaces these MOCs would make it easier to navigate by conceptual topic rather than folder structure.
+
+**Possible Approaches**:
+
+1. **Tab/Toggle in Explorer**:
+   - Add view switcher to Explorer component
+   - "Folder View" (current tree structure)
+   - "MOC View" (flat list of MOC files)
+   - User can toggle between views
+
+2. **Separate Component**:
+   - Create dedicated MOC navigation component
+   - Lives in sidebar separately from Explorer
+   - Shows list of files with `note_type: "[[MOC]]"` frontmatter
+
+3. **Smart Detection**:
+   - Automatically detect MOCs by analyzing backlinks
+   - Files with high incoming link counts are likely MOCs
+   - Dynamic view based on graph structure
+
+**Implementation Considerations**:
+- How to identify MOCs? (frontmatter field vs. backlink count vs. manual tag)
+- Should MOCs be grouped/categorized? (by topic, by tag, flat list)
+- Should MOC view show hierarchy? (MOCs linking to other MOCs)
+- Does this work across all tiers or only Full?
+
+**User Story**: As a vault browser, I want to navigate by conceptual topics (MOCs) rather than folder structure, so I can explore content organized around ideas rather than files.
+
+**Priority**: P2 - Nice to have, explore after core navigation improvements are stable
+
 ### Posthumous Vault Access Expansion
 
 **Goal**: When Dario passes away, significantly expand access to the vault (Level 0 - Full) tier to a larger group of people.
@@ -79,34 +127,6 @@ Bases is still under development, so I'm not sure I want to make sweeping change
 
 These are enhancement ideas generated during documentation work. They are organized by priority.
 
-### High Priority
-
-#### Add Public Site Deploy Hook to GitHub Actions
-
-**Current State**: The GitHub Actions workflow in the vault repository triggers deploys for 3 of 4 sites:
-- ✅ vault.dario.ca (Full)
-- ✅ notes-private.dario.ca (Trusted)
-- ✅ shachu.dario.ca (Shachu)
-- ❌ notes.dario.ca (Public) - **Missing**
-
-**Fix Required**: Add a fourth step to `.github/workflows/deploy-to-pages.yaml`:
-
-```yaml
-- name: Call Cloudflare Pages deploy hook (notes.dario.ca)
-  env:
-    CF_PAGES_PUBLIC_HOOK_URL: ${{ secrets.CF_PAGES_PUBLIC_HOOK_URL }}
-  run: |
-    if [ -z "$CF_PAGES_PUBLIC_HOOK_URL" ]; then
-      echo "Missing CF_PAGES_PUBLIC_HOOK_URL secret"; exit 1
-    fi
-    echo "Triggering notes.dario.ca build..."
-    curl -sS -X POST "$CF_PAGES_PUBLIC_HOOK_URL"
-```
-
-**Also Required**:
-- Add `CF_PAGES_PUBLIC_HOOK_URL` secret to vault repository settings
-- Get deploy hook URL from Cloudflare Pages project for notes.dario.ca
-
 ### Medium Priority
 
 #### Build Optimization and Caching
@@ -125,26 +145,6 @@ These are enhancement ideas generated during documentation work. They are organi
 - Quartz may not support incremental builds natively
 - Determining which tiers are affected by a content change requires parsing frontmatter
 - Complexity vs. benefit tradeoff (current build time is acceptable)
-
-#### Analytics Per Tier
-
-**Goal**: Track usage and engagement separately for each tier
-
-**Metrics to Track**:
-- Page views per tier
-- Most popular content at each access level
-- User engagement patterns
-- Traffic sources
-
-**Implementation**:
-- Configure Plausible Analytics with different site IDs per tier
-- Or use a single analytics instance with custom properties for tier identification
-- Set up dashboards to compare tier performance
-
-**Use Cases**:
-- Understand which content resonates at different access levels
-- Validate that the tiered approach is valuable
-- Identify content that should be promoted to more public tiers
 
 #### Automated Testing
 
@@ -166,66 +166,6 @@ These are enhancement ideas generated during documentation work. They are organi
 - Catch errors before they go live
 - Validate content structure
 - Ensure system integrity
-
-### Low Priority
-
-#### Content Migration Scripts
-
-**Goal**: Tools to help manage content visibility across tiers
-
-**Utilities to Build**:
-- **Promote script**: Automatically promote content from one tier to another
-  - Example: `promote-to-public.sh "My Note.md"` adds `publish: "[[Public]]"`
-- **Audit script**: List all content by tier
-  - Show what's published where
-  - Identify orphaned content (not published anywhere)
-- **Bulk update**: Change publish field for multiple files matching criteria
-
-**Use Cases**:
-- Easily promote content as it matures
-- Audit what's visible where
-- Clean up frontmatter inconsistencies
-
-### Ideas / Future Exploration
-
-#### Per-Tier Content Transformation
-
-**Concept**: Automatically modify content based on the tier
-
-**Examples**:
-- Redact sensitive information on lower tiers
-- Replace personal names with placeholders
-- Remove certain sections (e.g., "Personal Notes" callouts)
-- Apply different content filters or transformations
-
-**Challenges**:
-- Complex to implement reliably
-- May be better handled manually via careful content organization
-- Risk of unintended information disclosure
-
-#### Alternative Access Control
-
-**Current**: Cloudflare Zero Trust (Google Auth)
-
-**Alternatives to Consider**:
-- Password protection for certain tiers
-- Magic link authentication
-- Integration with other auth providers
-- Hybrid approach (some tiers public, some protected differently)
-
-#### Content Scheduling
-
-**Goal**: Schedule when content becomes visible on different tiers
-
-**Example**:
-- Draft written today
-- Auto-publishes to Trusted tier in 1 week
-- Auto-promotes to Public tier in 1 month
-
-**Implementation**:
-- Add `publish_date` frontmatter fields per tier
-- Build-time filtering based on current date
-- Scheduled rebuilds to make content go live
 
 ---
 
@@ -334,6 +274,9 @@ Implemented IndexSwapper plugin to automatically swap tier-specific index files 
 **Completed**: 2025-09-29
 
 Implemented PublishMode filter plugin for hierarchical content filtering across four tiers.
+
+#### Add Public Site Deploy Hook to GitHub Actions
+**Completed**: 2025-10-31
 
 ---
 

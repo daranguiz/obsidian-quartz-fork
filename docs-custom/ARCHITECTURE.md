@@ -466,67 +466,99 @@ publish: "[[Level 3 - Public]]"  → ✅ Published (hierarchical)
 
 #### Custom Transformer Plugins
 
-##### HideInBuild Transformer Plugin (CUSTOM)
+##### RedactionMarkers Transformer Plugin (CUSTOM)
 
-**Location**: `quartz/plugins/transformers/hideInBuild.ts`
+**Location**: `quartz/plugins/transformers/redactionMarkers.ts`
 
-**Purpose**: Conditionally removes content from markdown files based on publish mode using HTML comment markers
+**Purpose**: Line-by-line content filtering using simple HTML comment markers for quick redaction and hiding
 
 **How it works**:
-- Runs early in the transformer chain (right after FrontMatter parsing)
-- Detects HTML comment markers in markdown content: `<!-- hide-in-build -->` and `<!-- /hide-in-build -->`
-- Removes content between markers based on the current `QUARTZ_PUBLISH_MODE`
-- Supports parameterized hiding to specify which modes should hide the content
+- Scans markdown content line-by-line for redaction markers
+- Filters content based on marker type and current publish mode
+- Supports both inline (single-line) and block (multi-line) markers
+- Includes automatic "Juuden" keyword tripwire for sensitive content
 
-**Syntax**:
+**Marker Types**:
+
+1. **Inline Redact** - `<!-- redact -->`
+   - Hides entire line from non-full modes (public, trusted, shachu)
+   - Visible only in full mode
+   - Marker itself removed in full mode output
+
+2. **Inline No-Render** - `<!-- no-render -->`
+   - Hides entire line from ALL modes including full
+   - Useful for broken Dataview queries, draft content, etc.
+   - Completely filtered from all builds
+
+3. **Block Redact** - `<!-- redact-begin -->` ... `<!-- redact-end -->`
+   - Hides multi-line sections from non-full modes
+   - Markers must be on their own lines
+   - Content between markers visible only in full mode
+
+4. **Block No-Render** - `<!-- no-render-begin -->` ... `<!-- no-render-end -->`
+   - Hides multi-line sections from ALL modes
+   - Markers must be on their own lines
+   - Completely filtered from all builds
+
+**Juuden Keyword Tripwire**:
+- Any line containing the keyword "Juuden" (case-insensitive) is automatically treated as `<!-- redact -->`
+- Acts as a safety net for accidentally exposing sensitive content
+- Applies same filtering logic: hidden in non-full modes, visible in full mode
+
+**Syntax Examples**:
 
 ```markdown
-<!-- hide-in-build -->
-This content is hidden in ALL modes except "full"
-<!-- /hide-in-build -->
+# Public Content
 
-<!-- hide-in-build:public,shachu,trusted -->
-This content is ONLY visible in "full" mode
-(explicitly hidden from public, shachu, and trusted)
-<!-- /hide-in-build -->
+This line is visible everywhere.
 
-<!-- hide-in-build:public -->
-This content is visible in full, trusted, and shachu
-(only hidden from public)
-<!-- /hide-in-build -->
+This line is private <!-- redact -->
+
+This line is completely hidden <!-- no-render -->
+
+<!-- redact-begin -->
+## Private Section
+
+Multiple lines of private content.
+Only visible in full mode.
+<!-- redact-end -->
+
+<!-- no-render-begin -->
+## Broken Queries
+
+Dataview queries that don't render:
+```dataview
+LIST FROM "folder"
+```
+<!-- no-render-end -->
+
+Lines with Juuden keyword are automatically redacted.
 ```
 
-**Default behavior** (no mode parameter): Hide in all modes except `full`
+**Filtering Logic**:
+- `full` mode: Shows redact content, hides no-render content
+- `trusted/shachu/public` modes: Hides both redact and no-render content
 
-**Use cases**:
-- Hide Obsidian Dataview queries that don't render properly in static output
-- Remove internal notes or metadata visible only in your full vault
-- Hide work-in-progress content from public/shared tiers while keeping it in private tier
-- Conditionally show/hide content based on audience tier
+**Obsidian Plugin Integration**:
 
-**Example**:
-```markdown
----
-title: My Index Page
-publish: "[[Level 3 - Public]]"
----
+A companion Obsidian plugin ("Marker Tools") provides hotkey-based workflow:
 
-# Welcome
+**Location**: `.obsidian/plugins/redaction-markers/`
 
-This introduction is visible to everyone.
+**Features**:
+- Toggle inline markers with hotkeys (single line marking)
+- Toggle block markers with hotkeys (multi-line selection)
+- Visual widgets replace HTML comments in Live Preview:
+  - 🔒 REDACT (orange/amber badge)
+  - 🙈 NO-RENDER (slate gray badge)
+- Atomic widget behavior (can't accidentally edit or cursor into badges)
+- Cursor protection (End/Cmd-Right stops before badges)
+- Smart selection tolerance (whitespace-aware block toggling)
+- Conflict prevention (no nested markers or multiple markers per line)
 
-<!-- hide-in-build -->
-## Internal Notes
+**Processing order**: Runs in transformer chain after FrontMatter, processes raw markdown text
 
-These are my private Dataview queries and internal links:
-- dataview query here
-- internal planning notes
-<!-- /hide-in-build -->
-
-This conclusion is also visible to everyone.
-```
-
-**Processing order**: Runs BEFORE markdown is converted to HTML, so it works at the text level
+**Replaces**: `HideInBuild` transformer (deleted) - RedactionMarkers provides simpler, more user-friendly workflow
 
 **Status**: Completely custom to this fork
 
