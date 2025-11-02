@@ -146,7 +146,7 @@ if (isTagLink) {
 - [X] T037 Delete test file content/tag-test.md (cleanup)
 - [X] T038 Take screenshots of final implementation for documentation
 - [X] T039 Verify quickstart.md instructions match actual implementation
-- [ ] T040 Create git commit with descriptive message following convention
+- [X] T040 Create git commit with descriptive message following convention
 
 ---
 
