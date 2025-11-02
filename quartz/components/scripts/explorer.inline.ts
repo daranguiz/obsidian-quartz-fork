@@ -202,6 +202,21 @@ async function setupExplorer(currentSlug: FullSlug) {
       }
     })
 
+    // Inject auto-expand folders (if configured and not already in saved state)
+    const autoExpandFolders = JSON.parse(
+      explorer.dataset.autoExpandFolders || "[]"
+    ) as string[]
+
+    for (const folderPath of autoExpandFolders) {
+      // Check if this folder exists in the tree
+      const existingState = currentExplorerState.find(item => item.path === folderPath)
+
+      if (existingState && oldIndex.get(folderPath) === undefined) {
+        // Folder exists and has no saved state - set to expanded
+        existingState.collapsed = false
+      }
+    }
+
     const explorerUl = explorer.querySelector(".explorer-ul")
     if (!explorerUl) continue
 

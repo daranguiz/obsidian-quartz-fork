@@ -633,6 +633,89 @@ beforeBody: [
   - [quartz/styles/base.scss:93-116](quartz/styles/base.scss#L93-L116) - Conditional `.internal.broken` styling
   - [quartz/styles/custom.scss:5-27](quartz/styles/custom.scss#L5-L27) - Conditional `.dead-link` styling
 
+##### Smart Navigation Defaults (CUSTOM)
+
+**Location**:
+- [quartz/components/Explorer.tsx](quartz/components/Explorer.tsx) - Component option
+- [quartz/components/scripts/explorer.inline.ts](quartz/components/scripts/explorer.inline.ts) - State injection logic
+- [quartz.layout.ts](quartz.layout.ts) - Configuration
+
+**What it does**: Auto-expands specific folders in the Explorer navigation sidebar on lower trust tiers (Public, Shachu, Trusted) to reduce clicks needed to access frequently used content.
+
+**Purpose**: On lower tiers, the most frequently accessed content is in "Tea Resources/紙片 (Shihen)" (tea ceremony reference notes). Instead of requiring 3 clicks to access these files, this feature auto-expands both "Tea Resources" and its nested "紙片 (Shihen)" folder on page load, reducing access to 1 click.
+
+**Behavior by Tier**:
+- **Full tier**: All folders start collapsed (default Quartz behavior)
+- **Non-Full tiers** (Trusted, Shachu, Public): "Tea Resources" and "紙片 (Shihen)" auto-expand on first visit
+
+**Click Count Comparison**:
+- **Full tier**: 3 clicks to access Shihen files (expand Tea Resources → expand Shihen → click file)
+- **Lower tiers**: 1 click to access Shihen files (file already visible → click file)
+
+**User Preference Handling**: User manual actions always win. If a user manually collapses an auto-expanded folder, their preference is saved to localStorage and persists across page loads. The auto-expand configuration only applies when there is no saved state for a folder.
+
+**Implementation Details**:
+
+1. **Component Option** ([Explorer.tsx:19](quartz/components/Explorer.tsx#L19)):
+   ```typescript
+   export interface Options {
+     // ... other options
+     autoExpandFolders?: string[]  // NEW: Array of folder paths to auto-expand
+   }
+   ```
+
+2. **Data Attribute** ([Explorer.tsx:73](quartz/components/Explorer.tsx#L73)):
+   ```typescript
+   <div
+     class="explorer"
+     data-auto-expand-folders={JSON.stringify(opts.autoExpandFolders || [])}
+   >
+   ```
+
+3. **State Injection** ([explorer.inline.ts:205-218](quartz/components/scripts/explorer.inline.ts#L205-L218)):
+   ```typescript
+   const autoExpandFolders = JSON.parse(
+     explorer.dataset.autoExpandFolders || "[]"
+   ) as string[]
+
+   for (const folderPath of autoExpandFolders) {
+     const existingState = currentExplorerState.find(item => item.path === folderPath)
+     if (existingState && oldIndex.get(folderPath) === undefined) {
+       // Folder exists and has no saved state - set to expanded
+       existingState.collapsed = false
+     }
+   }
+   ```
+
+4. **Configuration** ([quartz.layout.ts:5-10](quartz.layout.ts#L5-L10)):
+   ```typescript
+   const publishMode = process.env.QUARTZ_PUBLISH_MODE || "full"
+
+   const autoExpandFolders = publishMode !== "full"
+     ? ["Tea Resources", "Tea Resources/紙片 (Shihen)"]
+     : []
+
+   Component.Explorer({
+     autoExpandFolders,
+     // ... other options
+   })
+   ```
+
+**State Priority**: When determining a folder's initial state:
+1. **Saved state** (localStorage) - User's previous interactions (highest priority)
+2. **Auto-expand config** - If no saved state for that folder
+3. **folderDefaultState** - Global default
+4. **Current path override** - Folder containing current page always expanded (existing behavior)
+
+**Edge Cases**:
+- **Folder doesn't exist**: Silently ignored, no errors
+- **Nested folder without parent**: Child may be expanded but hidden inside collapsed parent (configuration must include all parents)
+- **User manually collapses**: Saved state persists, auto-expand doesn't re-apply
+
+**Status**: Completely custom to this fork. Upstream Quartz Explorer only supports global `folderDefaultState` ("collapsed" or "open" for all folders), not selective per-folder auto-expansion.
+
+**Related Spec**: [specs/003-nav-flatten/](specs/003-nav-flatten/)
+
 #### Large File CDN Handling (CUSTOM)
 
 **Location**:

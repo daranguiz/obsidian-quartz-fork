@@ -1,6 +1,14 @@
 import { PageLayout, SharedLayout } from "./quartz/cfg"
 import * as Component from "./quartz/components"
 
+// Get publish mode for tier-specific configuration
+const publishMode = process.env.QUARTZ_PUBLISH_MODE || "full"
+
+// Auto-expand folders for lower tiers (Public, Shachu, Trusted)
+const autoExpandFolders = publishMode !== "full"
+  ? ["Tea Resources", "Tea Resources/紙片 (Shihen)"]
+  : []
+
 // components shared across all pages
 export const sharedPageComponents: SharedLayout = {
   head: Component.Head(),
@@ -40,6 +48,7 @@ export const defaultContentPageLayout: PageLayout = {
       ],
     }),
     Component.Explorer({
+      autoExpandFolders,
       filterFn: (node) => {
         // Exclude tags folder and unused index files
         if (node.slugSegment === "tags") return false
@@ -73,6 +82,7 @@ export const defaultListPageLayout: PageLayout = {
       ],
     }),
     Component.Explorer({
+      autoExpandFolders,
       filterFn: (node) => {
         // Exclude tags folder and unused index files
         if (node.slugSegment === "tags") return false
