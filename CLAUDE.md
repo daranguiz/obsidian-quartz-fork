@@ -2,6 +2,11 @@
 
 This document provides guidance for AI assistants (like Claude) working on this codebase. It explains conventions, where to find things, and how to maintain documentation.
 
+## User-added
+
+- Any time you build a site with styling changes, build it locally and serve a localhost link to me so I can see what the changes look like.
+- **Tag Display (005)**: Tags now appear inline in content where written (e.g., #tag). No top-of-page tags section. Tag links are functional and styled as regular links with # symbol visible.
+
 ---
 
 ## Core Principles
@@ -111,6 +116,7 @@ Remember: There are TWO repositories involved:
 | Redaction markers | `quartz/plugins/transformers/redactionMarkers.ts` | Transformer (custom) |
 | Redaction markers plugin | Vault: `.obsidian/plugins/redaction-markers/` | Obsidian plugin (custom) |
 | Frontmatter display | `quartz/components/FrontmatterProperties.tsx` | Component (custom) |
+| Inline tag display | `quartz/plugins/emitters/contentPage.tsx`, `quartz.layout.ts` | Bug fix + layout (custom - 005) |
 | Orange broken links | CSS files in `quartz/styles/` | Styling (custom) |
 | Explorer filtering | `quartz.layout.ts` (filterFn) | Configuration (custom) |
 
@@ -384,6 +390,8 @@ rm -rf content && cp -r ~/Documents/Dario\ Vault content && npx quartz build
 - localStorage (Explorer's existing saved state mechanism - already implemented) (003-nav-flatten)
 - TypeScript (targeting Obsidian plugin API + Quartz v4 Node.js runtime) (004-redaction-markers)
 - N/A (stateless - processes markdown files during build, no persistent storage) (004-redaction-markers)
+- TypeScript (targeting ES2020, Node.js runtime for build, browser runtime for components) + Quartz v4 framework, React 18 (for components), remark/unified (markdown processing), preact (runtime) (005-inline-tag-display)
+- N/A (stateless build-time transformation) (005-inline-tag-display)
 
 ## Recent Changes
 - 002-large-file-handling: Added TypeScript (Node.js) - Quartz build system is TypeScript-based + Quartz framework, Cloudflare R2 SDK (@cloudflare/workers-types), Node.js fs/crypto for file operations

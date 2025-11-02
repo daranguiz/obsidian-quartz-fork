@@ -32,7 +32,7 @@ export const defaultContentPageLayout: PageLayout = {
     Component.ArticleTitle(),
     Component.ContentMeta(),
     Component.FrontmatterProperties(),
-    Component.TagList(),
+    // Component.TagList() removed - tags now only appear inline (005-inline-tag-display)
   ],
   left: [
     Component.PageTitle(),

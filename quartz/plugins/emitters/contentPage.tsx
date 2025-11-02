@@ -53,6 +53,17 @@ async function processContent(
       }
 
       if (!allSlugs.includes(href as RelativeURL)) {
+        // Skip dead link conversion for tag links (they're generated dynamically)
+        const isTagLink =
+          (Array.isArray(elem.properties.className) &&
+            elem.properties.className.includes("tag-link")) ||
+          (typeof elem.properties.className === "string" &&
+            elem.properties.className.includes("tag-link"))
+
+        if (isTagLink) {
+          return  // Skip dead link conversion for tag links
+        }
+
         if (elem.properties.className === undefined) {
           elem.properties.className = "dead-link"
         } else if (Array.isArray(elem.properties.className)) {
