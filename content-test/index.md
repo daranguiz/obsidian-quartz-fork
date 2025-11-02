@@ -20,6 +20,7 @@ This is a test content set for **rapid development iteration** of Quartz feature
 - [[Reference/Style Guide]] - Internal reference
 - [[Dead Link Example]] - This link is intentionally broken
 - [[Daily/2024-01-15]] - Daily note
+- [[Gyo no Gyo]] - Test big file
 
 ## Statistics
 

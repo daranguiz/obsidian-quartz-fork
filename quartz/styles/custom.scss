@@ -2,21 +2,8 @@
 
 // put your custom CSS here!
 // Dead link styling - links to missing pages
-// Only show on full tier
-body[data-publish-mode="full"] .dead-link {
-  font-weight: 600;
-  text-decoration: none;
-  transition: color 0.2s ease;
-  color: #c9844c;
-  background-color: transparent;
-  padding: 0;
-  border-radius: 5px;
-  line-height: 1.4rem;
-  cursor: default;
-}
-
-// On non-full tiers, make dead links look like regular text
-body:not([data-publish-mode="full"]) .dead-link {
+// Make dead links look like regular text on all tiers (no special styling)
+.dead-link {
   font-weight: normal;
   text-decoration: none;
   color: inherit;

@@ -71,6 +71,12 @@ article {
 
 strong {
   font-weight: $semiBoldWeight;
+  color: #c9844c; // Warm tan-orange (former dead link color)
+}
+
+// Use same color in dark mode
+:root[saved-theme="dark"] strong {
+  color: #c9844c; // Same warm tan-orange in dark mode
 }
 
 a {
@@ -108,29 +114,15 @@ a {
 
     line-height: 1.4rem;
 
-    // Only show broken link styling on full tier
-    body[data-publish-mode="full"] & {
-      &.broken {
-        color: #c9844c;
-        opacity: 1.0;
-        transition: opacity 0.2s ease;
-        &:hover {
-          opacity: 0.8;
-        }
-      }
-    }
-
-    // On non-full tiers, make broken links look like regular text
-    body:not([data-publish-mode="full"]) & {
-      &.broken {
-        color: inherit;
-        opacity: 1;
-        font-weight: normal;
-        background-color: transparent;
-        padding: 0;
-        cursor: text;
-        pointer-events: none;
-      }
+    // Make broken links look like regular text on all tiers
+    &.broken {
+      color: inherit;
+      opacity: 1;
+      font-weight: normal;
+      background-color: transparent;
+      padding: 0;
+      cursor: text;
+      pointer-events: none;
     }
 
     &:has(> img) {
@@ -209,7 +201,8 @@ a {
       margin-bottom: 0;
     }
 
-    p > strong {
+    p > strong,
+    li > strong {
       color: var(--dark);
     }
   }
