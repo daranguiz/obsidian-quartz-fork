@@ -12,12 +12,6 @@ This document tracks planned enhancements and known issues that need to be addre
 
 These are tasks explicitly requested by Dario and take priority over AI-generated suggestions.
 
-### Tags show up weirdly
-
-https://trusted.dario.ca/Tea-Resources/紙片-(Shihen)/Number-of-sweets-for-higher-temae
-
-Not only are they rendered incorrectly, but the tag also shows up at the top of the page (which I don't want).
-
 ### Fix build times 
 
 4x builds, 4x clones, that's all bad. 
@@ -172,6 +166,27 @@ These are enhancement ideas generated during documentation work. They are organi
 ## Completed Tasks
 
 *As tasks are completed, move them here with completion date*
+
+### ✅ Inline Tag Display
+**Completed**: 2025-11-02
+**Feature**: 005-inline-tag-display
+
+**Problem Solved**: Tags were not rendering correctly in content - they appeared as non-clickable plain text without the # symbol. Additionally, tags appeared in a duplicate section at the top of each page, which was undesired.
+
+**Solution**:
+- Fixed dead link detection bug in `contentPage.tsx` that was converting tag links from `<a>` to `<span>` elements
+- Tag page URLs aren't in `allSlugs` because they're generated dynamically by TagPage emitter
+- Added check to skip dead link conversion for elements with `tag-link` class
+- Removed `Component.TagList()` from page layout to eliminate top-of-page tags section
+- Tags now appear inline at their exact markdown position styled as regular links with # symbol visible
+- All tag navigation and indexing functionality preserved
+
+**Implementation**:
+- Bug fix: [contentPage.tsx](../quartz/plugins/emitters/contentPage.tsx) lines 56-65
+- Layout change: [quartz.layout.ts](../quartz.layout.ts) line 35 (TagList removed from beforeBody)
+- CSS unchanged: [base.scss](../quartz/styles/base.scss) lines 123-127 already correct
+
+**Reference**: https://trusted.dario.ca/Tea-Resources/紙片-(Shihen)/Number-of-sweets-for-higher-temae (example page)
 
 ### ✅ Large File Handling (CDN Migration)
 **Completed**: 2025-10-31
