@@ -16,10 +16,6 @@ These are tasks explicitly requested by Dario and take priority over AI-generate
 
 4x builds, 4x clones, that's all bad. 
 
-### Dead link styling
-
-The current styling is a little loud. What if I keep the orange, but remove the background grey highlight? Maybe change the orange to be a little darker, more of a burnt orange?
-
 ### MOC-Based Navigation View
 
 **Goal**: Add an alternative navigation view in the Explorer sidebar that shows all MOC (Map of Content) files instead of the folder tree.
@@ -292,6 +288,15 @@ Implemented PublishMode filter plugin for hierarchical content filtering across 
 
 #### Add Public Site Deploy Hook to GitHub Actions
 **Completed**: 2025-10-31
+
+
+### Dead link styling
+
+The current styling is a little loud. What if I keep the orange, but remove the background grey highlight? Maybe change the orange to be a little darker, more of a burnt orange?
+
+### Fix link + bold styling 
+
+Links don't correctly inherit the font weight from bold styling in dark theme. (They do in light theme).
 
 ---
 

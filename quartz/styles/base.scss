@@ -147,9 +147,14 @@ a {
   }
 }
 
-// Use lighter link weight in dark mode
-:root[saved-theme="dark"] a {
+// Use lighter link weight in dark mode (but not inside bold text)
+:root[saved-theme="dark"] a:not(strong a):not(strong *) {
   font-weight: 500;
+}
+
+// Ensure links inside bold text stay bold in dark mode
+:root[saved-theme="dark"] strong a {
+  font-weight: $semiBoldWeight;
 }
 
 .flex-component {

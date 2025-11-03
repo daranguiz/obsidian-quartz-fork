@@ -22,6 +22,12 @@ This is a test content set for **rapid development iteration** of Quartz feature
 - [[Daily/2024-01-15]] - Daily note
 - [[Gyo no Gyo]] - Test big file
 
+This is a [[Projects/Project Alpha|link]] outside of a list. 
+
+**This is a bolded [[Projects/Project Alpha|link]] outside of a list.**
+
+- **This is a bolded [[Projects/Project Alpha|link]] in a list.**
+
 ## Statistics
 
 - **Total Files**: ~20-30 test files
