@@ -727,7 +727,7 @@ beforeBody: [
    const publishMode = process.env.QUARTZ_PUBLISH_MODE || "full"
 
    const autoExpandFolders = publishMode !== "full"
-     ? ["Tea Resources", "Tea Resources/紙片 (Shihen)"]
+     ? ["Tea Resources", "Tea Resources/紙片 (Shihen)", "Tea Resources/Temae Reference"]
      : []
 
    Component.Explorer({

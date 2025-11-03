@@ -6,7 +6,7 @@ const publishMode = process.env.QUARTZ_PUBLISH_MODE || "full"
 
 // Auto-expand folders for lower tiers (Public, Shachu, Trusted)
 const autoExpandFolders = publishMode !== "full"
-  ? ["Tea Resources", "Tea Resources/紙片 (Shihen)"]
+  ? ["Tea Resources", "Tea Resources/紙片 (Shihen)", "Tea Resources/Temae Reference"]
   : []
 
 // components shared across all pages

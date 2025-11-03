@@ -207,11 +207,30 @@ async function setupExplorer(currentSlug: FullSlug) {
       explorer.dataset.autoExpandFolders || "[]"
     ) as string[]
 
-    for (const folderPath of autoExpandFolders) {
-      // Check if this folder exists in the tree
-      const existingState = currentExplorerState.find(item => item.path === folderPath)
+    // Helper to slugify folder names to match trie format
+    const slugifyFolder = (path: string): string => {
+      return path
+        .split("/")
+        .map((segment) =>
+          segment
+            .replace(/\s/g, "-")          // spaces to hyphens
+            .replace(/&/g, "-and-")       // & to -and-
+            .replace(/%/g, "-percent")    // % to -percent
+            .replace(/\?/g, "")           // remove ?
+            .replace(/#/g, "")            // remove #
+            // Note: parentheses are kept as-is in the slug
+        )
+        .join("/") + "/index"
+    }
 
-      if (existingState && oldIndex.get(folderPath) === undefined) {
+    for (const folderPath of autoExpandFolders) {
+      // Slugify the configured folder path to match the trie format
+      const slugifiedPath = slugifyFolder(folderPath)
+
+      // Check if this folder exists in the tree using slugified path
+      const existingState = currentExplorerState.find(item => item.path === slugifiedPath)
+
+      if (existingState && oldIndex.get(slugifiedPath) === undefined) {
         // Folder exists and has no saved state - set to expanded
         existingState.collapsed = false
       }
